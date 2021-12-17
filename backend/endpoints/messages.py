@@ -200,6 +200,7 @@ async def get_message_by_id(org_id: str, room_id: str, message_id: str):
         raise e
 
 
+
 @router.put(
     "/org/{org_id}/rooms/{room_id}/messages/{message_id}",
     response_model=ResponseModel,
@@ -228,25 +229,19 @@ async def update_message(
         message_id: A unique identifier of the message that is being updated.
 
     Returns:
-        HTTP_200_OK {message updated successfully}:
+        HTTP_200_OK {message edited}:
         A dict containing data about the message that was updated (response_output).
             {
-                "_id": "61b8caec78fb01b18fac1410",
-                "created_at": "2021-12-14 16:40:43.302519",
-                "files": [],
-                "message_id": null,
-                "org_id": "619ba4671a5f54782939d384",
-                "reactions": [],
                 "room_id": "619e28c31a5f54782939d59a",
-                "saved_by": [],
-                "sender_id": "61696f5ac4133ddaa309dcfe",
-                "text": "testing messages",
-                "threads": []
+                "message_id": "61bc5e5378fb01b18fac1426",
+                "sender_id": "619ba4671a5f54782939d385",
+                "text": "testing edits",
+                "edited_at": "2021-12-17 11:47:22.678046"
             }
-
+            
     Raises:
         HTTP_404_FAILED_DEPENDENCY: Message not found
-        HTTP_424_FAILED_DEPENDENCY: Message not updated
+        HTTP_424_FAILED_DEPENDENCY: Message not edited
         HTTP_403_FORBIDDEN: You are not authorized to edit this message
     """
     DB = DataStorage(org_id)
@@ -274,20 +269,25 @@ async def update_message(
         )
         if message:
             edited_mssg = {
-            "text": payload["text"],
+                "room_id": room_id,
+                "message_id": message_id,
+                "sender_id": sender_id,
+                "text": payload["text"],
+                "edited_at": payload["edited_at"],
         }
             background_tasks.add_task(
                 centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, edited_mssg
             )  # publish to centrifugo in the background
             return JSONResponse(
                 content=ResponseModel.success(
-                    data=edited_mssg, message="message updated successfully"
+                    data=edited_mssg, message="message edited"
                 ),
                 status_code=status.HTTP_200_OK,
             )
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
-            detail={"message not updated": message},
+            detail={"message not edited": message},
         )
     except Exception as e:
         raise e
+
