@@ -349,6 +349,12 @@ async def add_reaction(
     # payload = request.dict()
     # react = mssg.get("reaction", [])
     react = mssg.get("reaction", [])
+
+    # if payload["sender_id"] in react:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN,    
+    #         detail="You are not authorized to add a reaction"
+    
     react.append(request.dict())
     payload = {"reaction": react}
     # react.append(payload)
