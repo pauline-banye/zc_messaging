@@ -1,11 +1,11 @@
-from fastapi import APIRouter, BackgroundTasks, HTTPException, status, Body
-from schema.message import Message, MessageRequest, MessageUpdateRequest, Reaction
+from fastapi import APIRouter, BackgroundTasks, HTTPException, status
+from schema.message import Message, MessageRequest, MessageUpdate, Reaction
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
 from utils.mssg_utils import get_mssg
-from typing import Dict
+
 
 router = APIRouter()
 
@@ -81,6 +81,68 @@ async def send_message(
         )
 
 
+# @router.get(
+#     "/org/{org_id}/rooms/{room_id}/messages",
+#     response_model=ResponseModel,
+#     status_code=status.HTTP_201_CREATED,
+#     responses={
+#         404: {"detail": "Messages not found"},
+#     },
+# )
+# async def get_all_messages(org_id: str, room_id: str): 
+#     """Reads all messages in the collection.
+
+#     Args:
+#         org_id (str): A unique identifier of an organisation
+#         request: A pydantic schema that defines the message request parameters
+#         room_id: A unique identifier of the room where the message is being sent to.
+
+#     Returns:
+#         HTTP_200_OK {messages retrieved}:
+#         A dict containing data about the messages in the collection based on the message schema (response_output).
+#             {
+#                 "_id": "61b8caec78fb01b18fac1410",
+#                 "created_at": "2021-12-14 16:40:43.302519",
+#                 "files": [],
+#                 "message_id": null,
+#                 "org_id": "619ba4671a5f54782939d384",
+#                 "reactions": [],
+#                 "room_id": "619e28c31a5f54782939d59a",
+#                 "saved_by": [],
+#                 "sender_id": "61696f5ac4133ddaa309dcfe",
+#                 "text": "testing messages",
+#                 "threads": []
+#             }
+
+#     Raises:
+#         HTTP_404_NOT_FOUND: "Messages not found"
+#     """
+#     DB = DataStorage(org_id)
+#     if org_id and room_id is None:
+#         raise HTTPException(
+#             status_code=status.HTTP_404_NOT_FOUND,
+#             detail="Invalid parameters",
+#         )
+#     try:
+#         messages = await DB.read(MESSAGE_COLLECTION, {"org_id": org_id, "room_id": room_id})
+#         if messages:
+#             return JSONResponse(
+#                 content=ResponseModel.success(
+#                     data=messages, message="messages retrieved"
+#                 ),
+#                 status_code=status.HTTP_200_OK,
+#             )
+#         raise HTTPException(
+#             status_code=status.HTTP_404_NOT_FOUND,
+#             detail={"Messages not found": messages},
+#         )
+#     except Exception as e:
+#         raise e
+    
+
+
+
+
 @router.get(
     "/org/{org_id}/rooms/{room_id}/messages",
     response_model=ResponseModel,
@@ -99,7 +161,7 @@ async def get_all_messages(org_id: str, room_id: str):
 
     Returns:
         HTTP_200_OK {messages retrieved}:
-        A dict containing data about the messages in the collection based on the message schema (response_output).
+        A list containing data about all the messages in the collection.
             {
                 "_id": "61b8caec78fb01b18fac1410",
                 "created_at": "2021-12-14 16:40:43.302519",
@@ -118,18 +180,13 @@ async def get_all_messages(org_id: str, room_id: str):
         HTTP_404_NOT_FOUND: "Messages not found"
     """
     DB = DataStorage(org_id)
-    if org_id and room_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Invalid parameters",
-        )
+    messages = await DB.read(MESSAGE_COLLECTION, {"org_id": org_id, "room_id": room_id})
+
     try:
-        messages = await DB.read(MESSAGE_COLLECTION, {"org_id": org_id, "room_id": room_id})
         if messages:
             return JSONResponse(
                 content=ResponseModel.success(
-                    data=messages, message="messages retrieved"
-                ),
+                    data=messages, message="messages retrieved"),
                 status_code=status.HTTP_200_OK,
             )
         raise HTTPException(
@@ -138,7 +195,7 @@ async def get_all_messages(org_id: str, room_id: str):
         )
     except Exception as e:
         raise e
-    
+
 
 @router.get(
     "/org/{org_id}/rooms/{room_id}/messages/{message_id}",
@@ -178,13 +235,11 @@ async def get_message_by_id(org_id: str, room_id: str, message_id: str):
         HTTP_HTTP_404_NOT_FOUND: Message not found
     """
     DB = DataStorage(org_id)
-    if org_id and room_id and message_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Invalid parameters",
-        )
+
+    message = await DB.read(MESSAGE_COLLECTION, {"org_id": org_id, "room_id": room_id, "_id": message_id})
+
     try:
-        message = await get_mssg(org_id=org_id, room_id=room_id, message_id=message_id)
+        # message = await get_mssg(org_id=org_id, room_id=room_id, message_id=message_id)
         if message:
             return JSONResponse(
                 content=ResponseModel.success(
@@ -201,22 +256,30 @@ async def get_message_by_id(org_id: str, room_id: str, message_id: str):
 
 
 
+
+
+
+
+
+
 @router.put(
     "/org/{org_id}/rooms/{room_id}/messages/{message_id}",
     response_model=ResponseModel,
     responses={
-        status.HTTP_200_OK: {"description": "message updated"},
+        status.HTTP_200_OK: {"description": "message edited"},
         status.HTTP_404_NOT_FOUND: {"description": "message not found"},
-        status.HTTP_403_FORBIDDEN: {"description": "you are not authorized to edit this message"},
-        status.HTTP_424_FAILED_DEPENDENCY: {"description": "message not updated"}
-        })
+        status.HTTP_403_FORBIDDEN: {
+            "description": "you are not authorized to edit this message"
+        },
+        status.HTTP_424_FAILED_DEPENDENCY: {"description": "message not edited"},
+    },
+)
 async def update_message(
-    request: MessageUpdateRequest,
+    request: MessageUpdate,
     org_id: str,
     room_id: str,
-    sender_id: str,
     message_id: str,
-    background_tasks: BackgroundTasks
+    background_tasks: BackgroundTasks,
 ):
     """
     Update a message
@@ -226,10 +289,10 @@ async def update_message(
         org_id: A unique identifier of the organization.
         room_id: A unique identifier of the room.
         sender_id: A unique identifier of the sender.
-        message_id: A unique identifier of the message that is being updated.
+        message_id: A unique identifier of the message that is being edited.
 
     Returns:
-        HTTP_200_OK {message edited}:
+        HTTP_200_OK {message updated successfully}:
         A dict containing data about the message that was updated (response_output).
             {
                 "room_id": "619e28c31a5f54782939d59a",
@@ -238,31 +301,26 @@ async def update_message(
                 "text": "testing edits",
                 "edited_at": "2021-12-17 11:47:22.678046"
             }
-            
+
     Raises:
         HTTP_404_FAILED_DEPENDENCY: Message not found
         HTTP_424_FAILED_DEPENDENCY: Message not edited
         HTTP_403_FORBIDDEN: You are not authorized to edit this message
     """
     DB = DataStorage(org_id)
-    if org_id and room_id and message_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Invalid parameters",
-        )
-    mssg = await get_mssg(org_id=org_id, room_id=room_id, message_id=message_id)
-    if not mssg:
+    message = await get_mssg(org_id=org_id, room_id=room_id, message_id=message_id)
+    if not message:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
         )
 
-    if mssg["sender_id"] != sender_id:
+    payload = request.dict()
+    if message["sender_id"] != payload["sender_id"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not authorized to edit this message",
         )
 
-    payload = request.dict()
     try:
         message = await DB.update(
             MESSAGE_COLLECTION, document_id=message_id, data=payload
@@ -271,25 +329,31 @@ async def update_message(
             edited_mssg = {
                 "room_id": room_id,
                 "message_id": message_id,
-                "sender_id": sender_id,
+                "sender_id": payload["sender_id"],
                 "text": payload["text"],
                 "edited_at": payload["edited_at"],
-        }
+            }
+
             background_tasks.add_task(
                 centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, edited_mssg
             )  # publish to centrifugo in the background
+
             return JSONResponse(
                 content=ResponseModel.success(
                     data=edited_mssg, message="message edited"
                 ),
                 status_code=status.HTTP_200_OK,
             )
+
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
             detail={"message not edited": message},
         )
+
     except Exception as e:
         raise e
+
+
 
 
 @router.post(
