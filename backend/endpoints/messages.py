@@ -204,12 +204,12 @@ async def get_message_by_id(org_id: str, room_id: str, message_id: str):
 @router.put(
     "/org/{org_id}/rooms/{room_id}/messages/{message_id}",
     response_model=ResponseModel,
-            responses={
-                status.HTTP_200_OK: {"description": "message updated"},
-                status.HTTP_404_NOT_FOUND: {"description": "message not found"},
-                status.HTTP_403_FORBIDDEN: {"description": "you are not authorized to edit this message"},
-                status.HTTP_424_FAILED_DEPENDENCY: {"description": "message not updated"}
-            })
+    responses={
+        status.HTTP_200_OK: {"description": "message updated"},
+        status.HTTP_404_NOT_FOUND: {"description": "message not found"},
+        status.HTTP_403_FORBIDDEN: {"description": "you are not authorized to edit this message"},
+        status.HTTP_424_FAILED_DEPENDENCY: {"description": "message not updated"}
+        })
 async def update_message(
     request: MessageUpdateRequest,
     org_id: str,
@@ -290,4 +290,199 @@ async def update_message(
         )
     except Exception as e:
         raise e
+
+
+@router.post(
+    "/org/{org_id}/rooms/{room_id}/messages/{message_id}/reactions",
+    response_model=ResponseModel,
+    responses={
+        status.HTTP_200_OK: {"description": "reaction added"},
+        status.HTTP_404_NOT_FOUND: {"description": "message not found"},
+        status.HTTP_403_FORBIDDEN: {"description": "you are not authorized to add a reaction"}
+        })
+async def add_reaction(
+    request: Reaction,
+    org_id: str,
+    room_id: str,
+    message_id: str,
+    background_tasks: BackgroundTasks
+):
+    """
+    Add a reaction to a message
+
+    Args:
+        request: Request object
+        org_id: A unique identifier of the organization.
+        room_id: A unique identifier of the room.
+        message_id: A unique identifier of the message.
+
+    Returns:
+        HTTP_200_OK {reaction added}:
+        A dict containing data about the reaction that was added (response_output).
+            {
+                "room_id": "619e28c31a5f54782939d59a",
+                "message_id": "61bc5e5378fb01b18fac1426",
+                "sender_id": "619ba4671a5f54782939d385",
+                "reaction": [
+                    {
+                        "sender_id": "619ba4671a5f54782939d385",
+                        "character": "love"
+                    }
+                ]
+            }
+            
+    Raises:
+        HTTP_404_NOT_FOUND: Message not found
+    """
+    DB = DataStorage(org_id)
+    if org_id and room_id and message_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invalid parameters",
+        )
+    mssg = await get_mssg(org_id=org_id, room_id=room_id, message_id=message_id)
+    if not mssg:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
+        )
+
+    # payload = request.dict()
+    # react = mssg.get("reaction", [])
+    react = mssg.get("reaction", [])
+    react.append(request.dict())
+    payload = {"reaction": react}
+    # react.append(payload)
+    # payload["reaction"] = react
+    try:
+        message = await DB.update(
+            MESSAGE_COLLECTION, document_id=message_id, data=payload
+        )
+        if message:
+            background_tasks.add_task(
+                centrifugo_client.publish, room_id, Events.MESSAGE_REACTION, payload
+            )  # publish to centrifugo in the background
+            return JSONResponse(
+                content=ResponseModel.success(
+                    data=payload, message="reaction added"
+                ),
+                status_code=status.HTTP_200_OK,
+            )
+        raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail={"reaction not added": message},
+        )
+    except Exception as e:
+        raise e
+        
+
+
+
+
+
+
+    # try:
+    #     message = await DB.write(
+    #         MESSAGE_COLLECTION,
+    #         document_id=message_id,
+    #         data={"$push": {"reaction": payload}},
+    #     )
+    #     if message:
+    #         background_tasks.add_task(
+    #             centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, payload
+    #         )  # publish to centrifugo in the background
+    #         return JSONResponse(
+    #             content=ResponseModel.success(
+    #                 data=payload, message="reaction added"
+    #             ),
+    #             status_code=status.HTTP_200_OK,
+    #         )
+    #     raise HTTPException(
+    #         status_code=status.HTTP_424_FAILED_DEPENDENCY,
+    #         detail={"reaction not added": message},
+    #     )
+    # except Exception as e:
+    #     raise e
+
+
+
+
+    # if sender_id not in mssg["reaction"]:
+    #     payload = request.dict()
+    #     payload["sender_id"] = sender_id
+    #     try:
+    #         message = await DB.update(
+    #             MESSAGE_COLLECTION, document_id=message_id, data=payload
+    #         )
+    #         if message:
+    #             background_tasks.add_task(
+    #                 centrifugo_client.publish, room_id, Events.MESSAGE_REACTION, payload
+    #             )  # publish to centrifugo in the background
+    #             return JSONResponse(
+    #                 content=ResponseModel.success(
+    #                     data=payload, message="reaction added"
+    #                 ),
+    #                 status_code=status.HTTP_200_OK,
+    #             )
+    #         raise HTTPException(
+    #             status_code=status.HTTP_424_FAILED_DEPENDENCY,
+    #             detail={"message not edited": message},
+    #         )
+    #     except Exception as e:
+    #         raise e
+
+
+
+
+    # def post(self, request, org_id, *args, **kwargs):
+
+    #     """
+    #     This endpoint persists the information about users who like or unlike a song and the total number of likes a song has. When a user likes a song, the informmation is saved to the database and the like count increases. If the same user likes the same song, the song is unliked and the counter reduces",
+
+    #     Sample request body
+
+    #     {
+    #         "userId": "juztiz5000kdkdkdkdkdkdkd",
+    #         "songId": "61ae1e7b5a3812d0a9d0b213"
+    #     }
+
+    #     """
+    #     helper = DataStorage()
+    #     helper.organization_id = org_id
+    #     serializer = SongLikeCountSerializer(data=request.data)
+    #     if serializer.is_valid():
+    #         songId = request.data["songId"]
+    #         userId = request.data["userId"]
+
+    #         songs = read_data(settings.SONG_COLLECTION, object_id=songId)
+    #         likedBy = songs["data"]["likedBy"]
+
+    #         if userId in likedBy:
+    #             likedBy.remove(userId)
+    #             unlike_count = len(likedBy)
+    #             helper.update("songs", songId, {"likedBy": likedBy})
+
+    #             return Response(
+    #                 {
+    #                     "unlikedBy": userId,
+    #                     "songId": songId,
+    #                     "total_likes": unlike_count,
+    #                 },
+    #                 status=status.HTTP_200_OK,
+    #             )
+
+    #         likedBy.append(userId)
+    #         like_count = len(likedBy)
+    #         helper.update("songs", songId, {"likedBy": likedBy})
+
+    #         return Response(
+    #             {
+    #                 "likedBy": userId,
+    #                 "songId": songId,
+    #                 "total_likes": like_count,
+    #             },
+    #             status=status.HTTP_200_OK,
+    #         )
+    #     return Response(data={"Bad request"}, status=status.HTTP_400_BAD_REQUEST)
+
+
 
