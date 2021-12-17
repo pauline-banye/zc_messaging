@@ -81,82 +81,19 @@ async def send_message(
         )
 
 
-# @router.get(
-#     "/org/{org_id}/rooms/{room_id}/messages",
-#     response_model=ResponseModel,
-#     status_code=status.HTTP_201_CREATED,
-#     responses={
-#         404: {"detail": "Messages not found"},
-#     },
-# )
-# async def get_all_messages(org_id: str, room_id: str): 
-#     """Reads all messages in the collection.
-
-#     Args:
-#         org_id (str): A unique identifier of an organisation
-#         request: A pydantic schema that defines the message request parameters
-#         room_id: A unique identifier of the room where the message is being sent to.
-
-#     Returns:
-#         HTTP_200_OK {messages retrieved}:
-#         A dict containing data about the messages in the collection based on the message schema (response_output).
-#             {
-#                 "_id": "61b8caec78fb01b18fac1410",
-#                 "created_at": "2021-12-14 16:40:43.302519",
-#                 "files": [],
-#                 "message_id": null,
-#                 "org_id": "619ba4671a5f54782939d384",
-#                 "reactions": [],
-#                 "room_id": "619e28c31a5f54782939d59a",
-#                 "saved_by": [],
-#                 "sender_id": "61696f5ac4133ddaa309dcfe",
-#                 "text": "testing messages",
-#                 "threads": []
-#             }
-
-#     Raises:
-#         HTTP_404_NOT_FOUND: "Messages not found"
-#     """
-#     DB = DataStorage(org_id)
-#     if org_id and room_id is None:
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND,
-#             detail="Invalid parameters",
-#         )
-#     try:
-#         messages = await DB.read(MESSAGE_COLLECTION, {"org_id": org_id, "room_id": room_id})
-#         if messages:
-#             return JSONResponse(
-#                 content=ResponseModel.success(
-#                     data=messages, message="messages retrieved"
-#                 ),
-#                 status_code=status.HTTP_200_OK,
-#             )
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND,
-#             detail={"Messages not found": messages},
-#         )
-#     except Exception as e:
-#         raise e
-    
-
-
-
-
 @router.get(
     "/org/{org_id}/rooms/{room_id}/messages",
     response_model=ResponseModel,
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_200_OK,
     responses={
         404: {"detail": "Messages not found"},
     },
 )
-async def get_all_messages(org_id: str, room_id: str): 
+async def get_all_messages(org_id: str, room_id: str):
     """Reads all messages in the collection.
 
     Args:
         org_id (str): A unique identifier of an organisation
-        request: A pydantic schema that defines the message request parameters
         room_id: A unique identifier of the room where the message is being sent to.
 
     Returns:
@@ -186,7 +123,8 @@ async def get_all_messages(org_id: str, room_id: str):
         if messages:
             return JSONResponse(
                 content=ResponseModel.success(
-                    data=messages, message="messages retrieved"),
+                    data=messages, message="messages retrieved"
+                ),
                 status_code=status.HTTP_200_OK,
             )
         raise HTTPException(
@@ -200,7 +138,7 @@ async def get_all_messages(org_id: str, room_id: str):
 @router.get(
     "/org/{org_id}/rooms/{room_id}/messages/{message_id}",
     response_model=ResponseModel,
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_200_OK,
     responses={
         404: {"detail": "Message not found"},
     },
@@ -210,13 +148,12 @@ async def get_message_by_id(org_id: str, room_id: str, message_id: str):
 
     Args:
         org_id (str): A unique identifier of an organisation
-        request: A pydantic schema that defines the message request parameters
         room_id: A unique identifier of the room where the message is being sent to.
         message_id: A unique identifier of the message to be retrieved
 
     Returns:
         HTTP_200_OK {message retrieved}:
-        A dict containing data about the message in the collection based on the message schema (response_output).
+        A dict containing data about the message in the collection based on the message schema.
             {
                 "_id": "61b8caec78fb01b18fac1410",
                 "created_at": "2021-12-14 16:40:43.302519",
@@ -235,11 +172,11 @@ async def get_message_by_id(org_id: str, room_id: str, message_id: str):
         HTTP_HTTP_404_NOT_FOUND: Message not found
     """
     DB = DataStorage(org_id)
-
-    message = await DB.read(MESSAGE_COLLECTION, {"org_id": org_id, "room_id": room_id, "_id": message_id})
+    message = await DB.read(
+        MESSAGE_COLLECTION, {"org_id": org_id, "room_id": room_id, "_id": message_id}
+    )
 
     try:
-        # message = await get_mssg(org_id=org_id, room_id=room_id, message_id=message_id)
         if message:
             return JSONResponse(
                 content=ResponseModel.success(
@@ -253,13 +190,6 @@ async def get_message_by_id(org_id: str, room_id: str, message_id: str):
         )
     except Exception as e:
         raise e
-
-
-
-
-
-
-
 
 
 @router.put(
@@ -356,93 +286,96 @@ async def update_message(
 
 
 
-@router.post(
-    "/org/{org_id}/rooms/{room_id}/messages/{message_id}/reactions",
-    response_model=ResponseModel,
-    responses={
-        status.HTTP_200_OK: {"description": "reaction added"},
-        status.HTTP_404_NOT_FOUND: {"description": "message not found"},
-        status.HTTP_403_FORBIDDEN: {"description": "you are not authorized to add a reaction"}
-        })
-async def add_reaction(
-    request: Reaction,
-    org_id: str,
-    room_id: str,
-    message_id: str,
-    background_tasks: BackgroundTasks
-):
-    """
-    Add a reaction to a message
 
-    Args:
-        request: Request object
-        org_id: A unique identifier of the organization.
-        room_id: A unique identifier of the room.
-        message_id: A unique identifier of the message.
 
-    Returns:
-        HTTP_200_OK {reaction added}:
-        A dict containing data about the reaction that was added (response_output).
-            {
-                "room_id": "619e28c31a5f54782939d59a",
-                "message_id": "61bc5e5378fb01b18fac1426",
-                "sender_id": "619ba4671a5f54782939d385",
-                "reaction": [
-                    {
-                        "sender_id": "619ba4671a5f54782939d385",
-                        "character": "love"
-                    }
-                ]
-            }
+
+# @router.post(
+#     "/org/{org_id}/rooms/{room_id}/messages/{message_id}/reactions",
+#     response_model=ResponseModel,
+#     responses={
+#         status.HTTP_200_OK: {"description": "reaction added"},
+#         status.HTTP_404_NOT_FOUND: {"description": "message not found"},
+#         status.HTTP_403_FORBIDDEN: {"description": "you are not authorized to add a reaction"}
+#         })
+# async def add_reaction(
+#     request: Reaction,
+#     org_id: str,
+#     room_id: str,
+#     message_id: str,
+#     background_tasks: BackgroundTasks
+# ):
+#     """
+#     Add a reaction to a message
+
+#     Args:
+#         request: Request object
+#         org_id: A unique identifier of the organization.
+#         room_id: A unique identifier of the room.
+#         message_id: A unique identifier of the message.
+
+#     Returns:
+#         HTTP_200_OK {reaction added}:
+#         A dict containing data about the reaction that was added (response_output).
+#             {
+#                 "room_id": "619e28c31a5f54782939d59a",
+#                 "message_id": "61bc5e5378fb01b18fac1426",
+#                 "sender_id": "619ba4671a5f54782939d385",
+#                 "reaction": [
+#                     {
+#                         "sender_id": "619ba4671a5f54782939d385",
+#                         "character": "love"
+#                     }
+#                 ]
+#             }
             
-    Raises:
-        HTTP_404_NOT_FOUND: Message not found
-    """
-    DB = DataStorage(org_id)
-    if org_id and room_id and message_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Invalid parameters",
-        )
-    mssg = await get_mssg(org_id=org_id, room_id=room_id, message_id=message_id)
-    if not mssg:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
-        )
+#     Raises:
+#         HTTP_404_NOT_FOUND: Message not found
+#     """
+#     DB = DataStorage(org_id)
+#     if org_id and room_id and message_id is None:
+#         raise HTTPException(
+#             status_code=status.HTTP_404_NOT_FOUND,
+#             detail="Invalid parameters",
+#         )
+#     mssg = await get_mssg(org_id=org_id, room_id=room_id, message_id=message_id)
+#     if not mssg:
+#         raise HTTPException(
+#             status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
+#         )
 
-    # payload = request.dict()
-    # react = mssg.get("reaction", [])
-    react = mssg.get("reaction", [])
+#     # payload = request.dict()
+#     # react = mssg.get("reaction", [])
+#     react = mssg.get("reaction", [])
 
-    # if payload["sender_id"] in react:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_403_FORBIDDEN,    
-    #         detail="You are not authorized to add a reaction"
+#     # if payload["sender_id"] in react:
+#     #     raise HTTPException(
+#     #         status_code=status.HTTP_403_FORBIDDEN,    
+#     #         detail="You are not authorized to add a reaction"
     
-    react.append(request.dict())
-    payload = {"reaction": react}
-    # react.append(payload)
-    # payload["reaction"] = react
-    try:
-        message = await DB.update(
-            MESSAGE_COLLECTION, document_id=message_id, data=payload
-        )
-        if message:
-            background_tasks.add_task(
-                centrifugo_client.publish, room_id, Events.MESSAGE_REACTION, payload
-            )  # publish to centrifugo in the background
-            return JSONResponse(
-                content=ResponseModel.success(
-                    data=payload, message="reaction added"
-                ),
-                status_code=status.HTTP_200_OK,
-            )
-        raise HTTPException(
-            status_code=status.HTTP_424_FAILED_DEPENDENCY,
-            detail={"reaction not added": message},
-        )
-    except Exception as e:
-        raise e
+#     react.append(request.dict())
+#     payload = {"reaction": react}
+#     # react.append(payload)
+#     # payload["reaction"] = react
+#     try:
+#         message = await DB.update(
+#             MESSAGE_COLLECTION, document_id=message_id, data=payload
+#         )
+#         if message:
+#             background_tasks.add_task(
+#                 centrifugo_client.publish, room_id, Events.MESSAGE_REACTION, payload
+#             )  # publish to centrifugo in the background
+#             return JSONResponse(
+#                 content=ResponseModel.success(
+#                     data=payload, message="reaction added"
+#                 ),
+#                 status_code=status.HTTP_200_OK,
+#             )
+#         raise HTTPException(
+#             status_code=status.HTTP_424_FAILED_DEPENDENCY,
+#             detail={"reaction not added": message},
+#         )
+#     except Exception as e:
+#         raise e
         
 
 
