@@ -175,7 +175,6 @@ async def get_message_by_id(org_id: str, room_id: str, message_id: str):
     message = await DB.read(
         MESSAGE_COLLECTION, {"org_id": org_id, "room_id": room_id, "_id": message_id}
     )
-
     try:
         if message:
             return JSONResponse(
@@ -190,6 +189,7 @@ async def get_message_by_id(org_id: str, room_id: str, message_id: str):
         )
     except Exception as e:
         raise e
+   
 
 
 @router.put(
@@ -252,11 +252,11 @@ async def update_message(
         )
 
     try:
-        message = await DB.update(
+        edit_message = await DB.update(
             MESSAGE_COLLECTION, document_id=message_id, data=payload
         )
-        if message:
-            edited_mssg = {
+        if edit_message:
+            data = {
                 "room_id": room_id,
                 "message_id": message_id,
                 "sender_id": payload["sender_id"],
@@ -265,24 +265,48 @@ async def update_message(
             }
 
             background_tasks.add_task(
-                centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, edited_mssg
+                centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, data
             )  # publish to centrifugo in the background
 
             return JSONResponse(
                 content=ResponseModel.success(
-                    data=edited_mssg, message="message edited"
+                    data=data, message="message edited"
                 ),
                 status_code=status.HTTP_200_OK,
             )
 
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
-            detail={"message not edited": message},
+            detail={"message not edited": edit_message},
         )
 
     except Exception as e:
         raise e
 
+
+   
+    # if message:
+    #     try:
+    #         # for reaction in message["reactions"]:
+    #         for message_obj in message:
+    #             if message_obj:
+    #                 return JSONResponse(
+    #                     content=ResponseModel.success(
+    #                         data=message, message="message retrieved"
+    #                     ),
+    #                     status_code=status.HTTP_200_OK,
+    #                 )
+    #         raise HTTPException(
+    #             status_code=status.HTTP_404_NOT_FOUND,
+    #             detail={"Message not found": message},
+    #         )
+    #     except Exception as e:
+    #         raise e
+    # raise HTTPException(
+    #     status_code=status.HTTP_400_BAD_REQUEST,
+    #     detail={"Message not found": message},
+
+    # )
 
 
 
