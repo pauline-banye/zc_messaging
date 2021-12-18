@@ -14,7 +14,6 @@ class Events(Enum):
 
     MESSAGE_CREATE = "message_create"
     MESSAGE_UPDATE = "message_update"
-    MESSAGE_REACTION = "message_reaction"
     MESSAGE_DELETE = "message_delete"
     ROOM_CREATE = "room_create"
     ROOM_UPDATE = "room_update"
