@@ -100,18 +100,25 @@ async def get_all_messages(org_id: str, room_id: str):
         HTTP_200_OK {messages retrieved}:
         A list containing data about all the messages in the collection.
             {
-                "_id": "61b8caec78fb01b18fac1410",
-                "created_at": "2021-12-14 16:40:43.302519",
-                "files": [],
-                "message_id": null,
-                "org_id": "619ba4671a5f54782939d384",
-                "reactions": [],
-                "room_id": "619e28c31a5f54782939d59a",
-                "saved_by": [],
-                "sender_id": "61696f5ac4133ddaa309dcfe",
-                "text": "testing messages",
-                "threads": []
-            }
+                "status": "success",
+                "message": "messages retrieved",
+                "data": [
+                    {
+                    "_id": "61b8ca9878fb01b18fac140f",
+                    "created_at": "2021-12-15 20:49:52.445747",
+                    "files": [
+                        "https://cdn.iconscout.com/icon/free/png-256/"
+                    ],
+                    "message_id": null,
+                    "org_id": "619ba4671a5f54782939d384",
+                    "reactions": [],
+                    "room_id": "619e28c31a5f54782939d59a",
+                    "saved_by": [],
+                    "sender_id": "61696f5ac4133ddaa309dcfe",
+                    "text": "test after switching back to Any",
+                    "threads": []
+                    }
+                ]
 
     Raises:
         HTTP_404_NOT_FOUND: "Messages not found"
@@ -155,19 +162,23 @@ async def get_message_by_id(org_id: str, room_id: str, message_id: str):
         HTTP_200_OK {message retrieved}:
         A dict containing data about the message in the collection based on the message schema.
             {
-                "_id": "61b8caec78fb01b18fac1410",
-                "created_at": "2021-12-14 16:40:43.302519",
-                "files": [],
-                "message_id": null,
-                "org_id": "619ba4671a5f54782939d384",
-                "reactions": [],
-                "room_id": "619e28c31a5f54782939d59a",
-                "saved_by": [],
-                "sender_id": "61696f5ac4133ddaa309dcfe",
-                "text": "testing messages",
-                "threads": []
-            }
-
+                "status": "success",
+                "message": "message retrieved",
+                "data": {
+                    "_id": "61bc6b6078fb01b18fac1427",
+                    "created_at": "2021-12-17 10:47:22.673050",
+                    "files": [],
+                    "message_id": null,
+                    "org_id": "619ba4671a5f54782939d384",
+                    "reactions": [],
+                    "room_id": "619e28c31a5f54782939d59a",
+                    "saved_by": [],
+                    "sender_id": "619ba4671a5f54782939d385",
+                    "text": "yet another check",
+                    "threads": []
+                    }
+                }
+                
     Raises:
         HTTP_HTTP_404_NOT_FOUND: Message not found
     """
@@ -190,7 +201,6 @@ async def get_message_by_id(org_id: str, room_id: str, message_id: str):
     except Exception as e:
         raise e
    
-
 
 @router.put(
     "/org/{org_id}/rooms/{room_id}/messages/{message_id}",
@@ -239,6 +249,7 @@ async def update_message(
     """
     DB = DataStorage(org_id)
     message = await get_mssg(org_id=org_id, room_id=room_id, message_id=message_id)
+
     if not message:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
@@ -250,7 +261,7 @@ async def update_message(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not authorized to edit this message",
         )
-
+        
     try:
         edit_message = await DB.update(
             MESSAGE_COLLECTION, document_id=message_id, data=payload
@@ -263,23 +274,19 @@ async def update_message(
                 "text": payload["text"],
                 "edited_at": payload["edited_at"],
             }
-
             background_tasks.add_task(
                 centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, data
             )  # publish to centrifugo in the background
-
             return JSONResponse(
                 content=ResponseModel.success(
                     data=data, message="message edited"
                 ),
                 status_code=status.HTTP_200_OK,
             )
-
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
             detail={"message not edited": edit_message},
         )
-
     except Exception as e:
         raise e
 
