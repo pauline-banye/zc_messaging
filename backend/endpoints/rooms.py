@@ -6,7 +6,7 @@ from schema.response import ResponseModel
 from schema.room import Role, Room, RoomMember, RoomRequest, RoomType
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
-from utils.room_utils import ROOM_COLLECTION, get_room
+from utils.room_utils import ROOM_COLLECTION, get_room, get_org_rooms
 from utils.sidebar import sidebar
 
 router = APIRouter()
@@ -171,3 +171,123 @@ async def join_room(
         detail="failed to add new members to room",
     )
     
+@router.get(
+    "/org/{org_id}/rooms",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    responses={
+        200: {"detail": {"rooms": "list of rooms"}},
+        404: {"detail": "rooms not found"},
+    },
+)
+async def get_all_rooms(org_id: str):
+    """Get all rooms.
+
+    Returns the list of rooms if the rooms are found in the database
+    Raises HTTP_404_NOT_FOUND if the org_id is invalid or rooms are not found
+
+    Args:
+        org_id (str): A unique identifier of an organisation
+
+    Returns:
+        HTTP_200_OK (list of rooms in the org)
+        {
+            "_id": "61bc094b78fb01b18fac1425",
+            "created_at": "2021-12-17 03:10:26.620752",
+            "created_by": "619ba4671a5f54782939d385",
+            "description": "string",
+            "id": null,
+            "is_archived": false,
+            "is_private": false,
+            "org_id": "619ba4671a5f54782939d384",
+            "room_members": {
+                "619ba4671a5f54782939d385": {
+                "closed": false,
+                "role": "admin",
+                "starred": false
+                }
+            },
+            "room_name": "testroom2",
+            "room_type": "CHANNEL",
+            "topic": "string"
+        }
+
+    Raises:
+        HTTP_404_NOT_FOUND (Failure to retrieve org rooms): {rooms}
+    """
+    rooms = await get_org_rooms(org_id=org_id)
+
+    try:
+        if rooms:
+            return JSONResponse(
+                content=ResponseModel.success(
+                    data=rooms, message="list of rooms in the org"
+                ),
+                status_code=status.HTTP_200_OK,
+            )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Failure to retrieve org rooms",
+        )
+    except Exception as e:
+        raise e
+
+
+@router.get(
+    "/org/{org_id}/rooms/{room_id}",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    responses={
+        200: {"detail": {"room_id": "room_id"}},
+        404: {"detail": "room not found"},
+    },
+)
+async def get_room_by_id(org_id: str, room_id: str):
+    """Get room by id.
+
+    Returns the room object if the room is found in the database
+    Raises HTTP_404_NOT_FOUND if the room is not found
+
+    Args:
+        org_id (str): A unique identifier of an organisation
+        room_id (str): A unique identifier of the room
+
+    Returns:
+        HTTP_200_OK (room found)
+        {
+            "_id": "61bc094b78fb01b18fac1425",
+            "created_at": "2021-12-17 03:10:26.620752",
+            "created_by": "619ba4671a5f54782939d385",
+            "description": "string",
+            "id": null,
+            "is_archived": false,
+            "is_private": false,
+            "org_id": "619ba4671a5f54782939d384",
+            "room_members": {
+                "619ba4671a5f54782939d385": {
+                "closed": false,
+                "role": "admin",
+                "starred": false
+                }
+            },
+            "room_name": "testroom2",
+            "room_type": "CHANNEL",
+            "topic": "string"
+        }
+
+    Raises:
+        HTTP_404_NOT_FOUND (room not found): {room}
+    """
+    room = await get_room(org_id=org_id, room_id=room_id)
+
+    try:
+        if room:
+            return JSONResponse(
+                content=ResponseModel.success(data=room, message="room found"),
+                status_code=status.HTTP_200_OK,
+            )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="room not found"
+        )
+    except Exception as e:
+        raise e
