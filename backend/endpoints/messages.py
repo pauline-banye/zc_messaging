@@ -142,11 +142,12 @@ async def get_all_messages(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={"Messages not found": messages},
         )
-    except Exception:
+    except HTTPException as e:
         return JSONResponse(
             data="Failure to retrieve data",
-            status=status.HTTP_424_FAILED_DEPENDENCY
-            )
+            status=status.HTTP_424_FAILED_DEPENDENCY,
+            detail=e,
+        )
 
 
 @router.get(
@@ -215,11 +216,12 @@ async def get_message_by_id(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={"Message not found": message},
         )
-    except Exception:
+    except HTTPException as e:
         return JSONResponse(
             data="Failure to retrieve data",
-            status=status.HTTP_424_FAILED_DEPENDENCY
-            )
+            status=status.HTTP_424_FAILED_DEPENDENCY,
+            detail=e,
+        )
    
 
 @router.put(
@@ -379,11 +381,12 @@ async def add_reaction(
             detail={"Reaction not removed"},
         )
 
-    except Exception:
+    except HTTPException as e:
         return JSONResponse(
             data="Failure to retrieve data",
-            status=status.HTTP_424_FAILED_DEPENDENCY
-            )
+            status=status.HTTP_424_FAILED_DEPENDENCY,
+            detail=e,
+        )
 
 
 # @router.put( 
@@ -475,11 +478,12 @@ async def add_reaction(
 #             status_code=status.HTTP_424_FAILED_DEPENDENCY,
 #             detail={"message not edited": edit_message},
 #         )
-#     except Exception:
+#     except HTTPException as e:
 #         return JSONResponse(
-#             content={"message": "Failure to retrieve data"},
-#             status_code=status.HTTP_424_FAILED_DEPENDENCY,
-#             )
+#             data="Failure to retrieve data",
+#             status=status.HTTP_424_FAILED_DEPENDENCY,
+#             detail=e,
+#         )
 
 
 
@@ -581,8 +585,10 @@ async def add_reaction(
 #             status_code=status.HTTP_424_FAILED_DEPENDENCY,
 #             detail={"message not edited": edit_message},
 #         )
-#     except Exception:
+#     except HTTPException as e:
 #         return JSONResponse(
-#             content={"message": "Failure to retrieve data"},
-#             status_code=status.HTTP_424_FAILED_DEPENDENCY,
-#             )
+#             data="Failure to retrieve data",
+#             status=status.HTTP_424_FAILED_DEPENDENCY,
+#             detail=e,
+#         )
+
