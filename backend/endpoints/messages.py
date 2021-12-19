@@ -1,5 +1,5 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
-from schema.message import Message, MessageRequest, Reaction, Thread #, MessageUpdate
+from schema.message import Message, MessageRequest, Reaction, MessageUpdate
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
@@ -223,198 +223,6 @@ async def get_message_by_id(
    
 
 @router.put(
-    "/org/{org_id}/rooms/{room_id}/messages/{message_id}",
-    response_model=ResponseModel,
-    responses={
-        status.HTTP_200_OK: {"description": "message edited"},
-        status.HTTP_401_UNAUTHORIZED: {
-            "description": "you are not authorized to edit this message"
-        },
-        status.HTTP_404_NOT_FOUND: {"description": "message not found"},
-        status.HTTP_424_FAILED_DEPENDENCY: {"description": "message not edited"},
-    },
-)
-async def update_message(
-    # request: MessageUpdate,
-    request: Thread,
-    org_id: str,
-    room_id: str,
-    message_id: str,
-    background_tasks: BackgroundTasks,
-):
-    """
-    Update a message
-
-    Args:
-        request: Request object
-        org_id: A unique identifier of the organization.
-        room_id: A unique identifier of the room.
-        sender_id: A unique identifier of the sender.
-        message_id: A unique identifier of the message that is being edited.
-
-    Returns:
-        HTTP_200_OK {message updated successfully}:
-        A dict containing data about the message that was updated (response_output).
-            {
-                "room_id": "619e28c31a5f54782939d59a",
-                "message_id": "61bc5e5378fb01b18fac1426",
-                "sender_id": "619ba4671a5f54782939d385",
-                "text": "testing edits",
-                "edited_at": "2021-12-17 11:47:22.678046"
-            }
-
-    Raises:
-        HTTP_401_UNAUTHORIZED: You are not authorized to edit this message
-        HTTP_404_FAILED_DEPENDENCY: Message not found
-        HTTP_424_FAILED_DEPENDENCY: Message not edited
-    """
-    DB = DataStorage(org_id)
-    message = await get_message(org_id, room_id, message_id)
-
-    try:
-        if not message:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
-            )
-
-        payload = request.dict()
-        if message["sender_id"] != payload["sender_id"]:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="You are not authorized to edit this message",
-            )
-        
-        edit_message = await DB.update(
-            MESSAGE_COLLECTION, document_id=message_id, data=payload
-        )
-        if edit_message:
-            data = {
-                "room_id": room_id,
-                "message_id": message_id,
-                "sender_id": payload["sender_id"],
-                "text": payload["text"],
-                "edited_at": payload["edited_at"],
-            }
-            background_tasks.add_task(
-                centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, data
-            )  # publish to centrifugo in the background
-            return JSONResponse(
-                content=ResponseModel.success(
-                    data=data, message="message edited"
-                ),
-                status_code=status.HTTP_200_OK,
-            )
-        raise HTTPException(
-            status_code=status.HTTP_424_FAILED_DEPENDENCY,
-            detail={"message not edited": edit_message},
-        )
-    except Exception:
-        return JSONResponse(
-            data="Failure to retrieve data",
-            status=status.HTTP_424_FAILED_DEPENDENCY
-            )
-
-
-# @router.put(
-#     "/org/{org_id}/rooms/{room_id}/messages/{message_id}",
-#     response_model=ResponseModel,
-#     responses={
-#         status.HTTP_200_OK: {"description": "message edited"},
-#         status.HTTP_401_UNAUTHORIZED: {
-#             "description": "you are not authorized to edit this message"
-#         },
-#         status.HTTP_404_NOT_FOUND: {"description": "message not found"},
-#         status.HTTP_424_FAILED_DEPENDENCY: {"description": "message not edited"},
-#     },
-# ) # fully functional
-# async def update_message(
-#     request: MessageUpdate,
-#     org_id: str,
-#     room_id: str,
-#     message_id: str,
-#     background_tasks: BackgroundTasks,
-# ):
-#     """
-#     Update a message
-
-#     Args:
-#         request: Request object
-#         org_id: A unique identifier of the organization.
-#         room_id: A unique identifier of the room.
-#         sender_id: A unique identifier of the sender.
-#         message_id: A unique identifier of the message that is being edited.
-
-#     Returns:
-#         HTTP_200_OK {message updated successfully}:
-#         A dict containing data about the message that was updated (response_output).
-#             {
-#                 "room_id": "619e28c31a5f54782939d59a",
-#                 "message_id": "61bc5e5378fb01b18fac1426",
-#                 "sender_id": "619ba4671a5f54782939d385",
-#                 "text": "testing edits",
-#                 "edited_at": "2021-12-17 11:47:22.678046"
-#             }
-
-#     Raises:
-#         HTTP_401_UNAUTHORIZED: You are not authorized to edit this message
-#         HTTP_404_FAILED_DEPENDENCY: Message not found
-#         HTTP_424_FAILED_DEPENDENCY: Message not edited
-#     """
-#     DB = DataStorage(org_id)
-#     message = await get_message(org_id, room_id, message_id)
-
-#     try:
-#         if not message:
-#             raise HTTPException(
-#                 status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
-#             )
-
-#         payload = request.dict()
-#         if message["sender_id"] != payload["sender_id"]:
-#             raise HTTPException(
-#                 status_code=status.HTTP_401_UNAUTHORIZED,
-#                 detail="You are not authorized to edit this message",
-#             )
-        
-#         edit_message = await DB.update(
-#             MESSAGE_COLLECTION, document_id=message_id, data=payload
-#         )
-#         if edit_message:
-#             data = {
-#                 "room_id": room_id,
-#                 "message_id": message_id,
-#                 "sender_id": payload["sender_id"],
-#                 "text": payload["text"],
-#                 "edited_at": payload["edited_at"],
-#             }
-#             background_tasks.add_task(
-#                 centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, data
-#             )  # publish to centrifugo in the background
-#             return JSONResponse(
-#                 content=ResponseModel.success(
-#                     data=data, message="message edited"
-#                 ),
-#                 status_code=status.HTTP_200_OK,
-#             )
-#         raise HTTPException(
-#             status_code=status.HTTP_424_FAILED_DEPENDENCY,
-#             detail={"message not edited": edit_message},
-#         )
-#     except Exception:
-#         return JSONResponse(
-#             data="Failure to retrieve data",
-#             status=status.HTTP_424_FAILED_DEPENDENCY
-#             )
-
-
-
-
-
-
-
-
-
-@router.put(
     "/org/{org_id}/rooms/{room_id}/messages/{message_id}/reactions",
     response_model=ResponseModel,
     responses={
@@ -575,4 +383,206 @@ async def add_reaction(
         return JSONResponse(
             data="Failure to retrieve data",
             status=status.HTTP_424_FAILED_DEPENDENCY
+            )
+
+
+# @router.put( 
+#     "/org/{org_id}/rooms/{room_id}/messages/{message_id}",
+#     response_model=ResponseModel,
+#     responses={
+#         status.HTTP_200_OK: {"description": "message edited"},
+#         status.HTTP_404_NOT_FOUND: {"description": "message not found"},
+#         status.HTTP_401_UNAUTHORIZED: {
+#             "description": "you are not authorized to edit this message"
+#         },
+#         status.HTTP_424_FAILED_DEPENDENCY: {"description": "message not edited"},
+#         status.HTTP_424_FAILED_DEPENDENCY: {"description": "Failure to retrieve data"},
+#     },
+# )
+# async def update_message(
+#     request: MessageUpdate,
+#     org_id: str,
+#     room_id: str,
+#     message_id: str,
+#     background_tasks: BackgroundTasks,
+# ):
+#     """
+#     Update a message
+
+#     Args:
+#         request: Request object
+#         org_id: A unique identifier of the organization.
+#         room_id: A unique identifier of the room.
+#         sender_id: A unique identifier of the sender.
+#         message_id: A unique identifier of the message that is being edited.
+
+#     Returns:
+#         HTTP_200_OK {message updated successfully}:
+#         A dict containing data about the message that was updated (response_output).
+#             {
+#                 "status": "success",
+#                 "message": "message edited",
+#                 "data": {
+#                     "room_id": "619e28c31a5f54782939d59a",
+#                     "message_id": "61ba9b0378fb01b18fac1420",
+#                     "sender_id": "619ba4671a5f54782939d385",
+#                     "text": "check on updates"
+#                 }
+#             }
+
+#     Raises:
+#         HTTPException [401]: You are not authorized to edit this message
+#         HTTPException [404]: Message not found
+#         HTTPException [424]: "message not edited"
+#         HTTPException [424]: Failure to retrieve data
+#     """
+#     DB = DataStorage(org_id)
+#     message = await get_message(org_id, room_id, message_id)
+
+#     try:
+#         if not message:
+#             raise HTTPException(
+#                 status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
+#             )
+
+#         payload = request.dict()
+#         if message["sender_id"] != payload["sender_id"]:
+#             raise HTTPException(
+#                 status_code=status.HTTP_401_UNAUTHORIZED,
+#                 detail="You are not authorized to edit this message",
+#             )
+        
+#         edit_message = await DB.update(
+#             MESSAGE_COLLECTION, document_id=message_id, data=payload
+#         )
+#         if edit_message:
+#             data = {
+#                 "room_id": room_id,
+#                 "message_id": message_id,
+#                 "sender_id": payload["sender_id"],
+#                 "text": payload["text"]
+#             }
+#             background_tasks.add_task(
+#                 centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, data
+#             )  # publish to centrifugo in the background
+#             return JSONResponse(
+#                 content=ResponseModel.success(
+#                     data=data, message="message edited"
+#                 ),
+#                 status_code=status.HTTP_200_OK,
+#             )
+#         raise HTTPException(
+#             status_code=status.HTTP_424_FAILED_DEPENDENCY,
+#             detail={"message not edited": edit_message},
+#         )
+#     except Exception:
+#         return JSONResponse(
+#             content={"message": "Failure to retrieve data"},
+#             status_code=status.HTTP_424_FAILED_DEPENDENCY,
+#             )
+
+
+
+@router.put( # not working
+    "/org/{org_id}/rooms/{room_id}/messages/{message_id}",
+    response_model=ResponseModel,
+    responses={
+        status.HTTP_200_OK: {"description": "message edited"},
+        status.HTTP_404_NOT_FOUND: {"description": "message not found"},
+        status.HTTP_401_UNAUTHORIZED: {
+            "description": "you are not authorized to edit this message"
+        },
+        status.HTTP_424_FAILED_DEPENDENCY: {"description": "message not edited"},
+        status.HTTP_424_FAILED_DEPENDENCY: {"description": "Failure to retrieve data"},
+    },
+)
+async def update_message(
+    request: Message,
+    org_id: str,
+    room_id: str,
+    message_id: str,
+    background_tasks: BackgroundTasks,
+):
+    """
+    Update a message
+
+    Args:
+        request: Request object
+        org_id: A unique identifier of the organization.
+        room_id: A unique identifier of the room.
+        sender_id: A unique identifier of the sender.
+        message_id: A unique identifier of the message that is being edited.
+
+    Returns:
+        HTTP_200_OK {message updated successfully}:
+        A dict containing data about the message that was updated (response_output).
+            {
+                "status": "success",
+                "message": "message edited",
+                "data": {
+                    "room_id": "619e28c31a5f54782939d59a",
+                    "message_id": "61ba9b0378fb01b18fac1420",
+                    "sender_id": "619ba4671a5f54782939d385",
+                    "text": "check on updates"
+                }
+            }
+
+    Raises:
+        HTTPException [401]: You are not authorized to edit this message
+        HTTPException [404]: Message not found
+        HTTPException [424]: "message not edited"
+        HTTPException [424]: Failure to retrieve data
+    """
+    DB = DataStorage(org_id)
+    message = await get_message(org_id, room_id, message_id)
+
+    # body = Message(
+    #     **request.dict(exclude_unset=True), org_id=org_id, room_id=room_id, sender_id=sender_id
+    # )
+
+    try:
+        if not message:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
+            )
+
+        body = request.dict(exclude_unset=True)
+        payload = {
+            "text": body["text"],
+            "sender_id": body["sender_id"],
+        }
+
+        if message["sender_id"] != payload["sender_id"]:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You are not authorized to edit this message",
+            )
+        
+        edit_message = await DB.update(
+            MESSAGE_COLLECTION, document_id=message_id, data=payload
+        )
+        if edit_message:
+            data = {
+                "room_id": room_id,
+                "message_id": message_id,
+                "sender_id": payload["sender_id"],
+                "text": payload["text"]
+            }
+            background_tasks.add_task(
+                centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, data
+            )  # publish to centrifugo in the background
+            return JSONResponse(
+                content=ResponseModel.success(
+                    data=data, message="message edited"
+                ),
+                status_code=status.HTTP_200_OK,
+            )
+        raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail={"message not edited": edit_message},
+        )
+    except Exception:
+        return JSONResponse(
+            content={"message": "Failure to retrieve data"},
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
             )
