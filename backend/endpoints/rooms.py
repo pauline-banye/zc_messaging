@@ -171,89 +171,98 @@ async def join_room(
         detail="failed to add new members to room",
     )
     
+
 @router.get(
     "/org/{org_id}/rooms",
     response_model=ResponseModel,
-    status_code=status.HTTP_200_OK,
     responses={
-        200: {"detail": {"rooms": "list of rooms"}},
-        404: {"detail": "rooms not found"},
-    },
+        status.HTTP_200_OK: {"detail": "list of rooms retrieved"},
+        status.HTTP_404_NOT_FOUND: {"detail": "rooms not found"},
+        status.HTTP_424_FAILED_DEPENDENCY: {"detail": "Failure to retrieve data"}
+    }
 )
 async def get_all_rooms(org_id: str):
     """Get all rooms.
 
     Returns the list of rooms if the rooms are found in the database
-    Raises HTTP_404_NOT_FOUND if the org_id is invalid or rooms are not found
-
+    
     Args:
         org_id (str): A unique identifier of an organisation
 
     Returns:
-        HTTP_200_OK (list of rooms in the org)
+        HTTP_200_OK
         {
-            "_id": "61bc094b78fb01b18fac1425",
-            "created_at": "2021-12-17 03:10:26.620752",
-            "created_by": "619ba4671a5f54782939d385",
-            "description": "string",
-            "id": null,
-            "is_archived": false,
-            "is_private": false,
-            "org_id": "619ba4671a5f54782939d384",
-            "room_members": {
-                "619ba4671a5f54782939d385": {
-                "closed": false,
-                "role": "admin",
-                "starred": false
+            "status": "success",
+            "message": "List of rooms retrieved",
+            "data": [
+                {
+                "_id": "61bc091f78fb01b18fac1424",
+                "created_at": "2021-12-17 03:10:26.620752",
+                "created_by": "619ba4671a5f54782939d385",
+                "description": "string",
+                "id": null,
+                "is_archived": false,
+                "is_private": false,
+                "org_id": "619ba4671a5f54782939d384",
+                "room_members": {
+                    "619ba4671a5f54782939d385": {
+                    "closed": false,
+                    "role": "member",
+                    "starred": false
+                    }
+                },
+                "room_name": "testroom",
+                "room_type": "CHANNEL",
+                "topic": "string"
                 }
-            },
-            "room_name": "testroom2",
-            "room_type": "CHANNEL",
-            "topic": "string"
+            ]
         }
-
+        
     Raises:
-        HTTP_404_NOT_FOUND (Failure to retrieve org rooms): {rooms}
+        HTTPException [404]: Rooms not found
+        HTTPException [424]: Failure to retrieve data
     """
-    rooms = await get_org_rooms(org_id=org_id)
+    rooms = await get_org_rooms(org_id)
 
     try:
         if rooms:
             return JSONResponse(
                 content=ResponseModel.success(
-                    data=rooms, message="list of rooms in the org"
+                    data=rooms, message="List of rooms retrieved"
                 ),
                 status_code=status.HTTP_200_OK,
             )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Failure to retrieve org rooms",
+            detail="Rooms not found",
         )
-    except Exception as e:
-        raise e
+    except Exception:
+        return JSONResponse(
+            data="Failure to retrieve data",
+            status=status.HTTP_424_FAILED_DEPENDENCY
+            )
 
 
 @router.get(
     "/org/{org_id}/rooms/{room_id}",
     response_model=ResponseModel,
-    status_code=status.HTTP_200_OK,
     responses={
-        200: {"detail": {"room_id": "room_id"}},
-        404: {"detail": "room not found"},
+        status.HTTP_200_OK: {"detail": "room detail retrieved"},
+        status.HTTP_404_NOT_FOUND: {"detail": "room not found"},
+        status.HTTP_424_FAILED_DEPENDENCY: {"detail": "Failure to retrieve data"}
     },
 )
 async def get_room_by_id(org_id: str, room_id: str):
     """Get room by id.
 
     Returns the room object if the room is found in the database
-    Raises HTTP_404_NOT_FOUND if the room is not found
 
     Args:
         org_id (str): A unique identifier of an organisation
         room_id (str): A unique identifier of the room
 
     Returns:
-        HTTP_200_OK (room found)
+        HTTP_200_OK (room detail retrieved)
         {
             "_id": "61bc094b78fb01b18fac1425",
             "created_at": "2021-12-17 03:10:26.620752",
@@ -276,18 +285,22 @@ async def get_room_by_id(org_id: str, room_id: str):
         }
 
     Raises:
-        HTTP_404_NOT_FOUND (room not found): {room}
+        HTTPException [404]: Room not found
+        HTTPException [424]: Failure to retrieve data
     """
-    room = await get_room(org_id=org_id, room_id=room_id)
+    room = await get_room(org_id, room_id)
 
     try:
         if room:
             return JSONResponse(
-                content=ResponseModel.success(data=room, message="room found"),
+                content=ResponseModel.success(data=room, message="room detail retrieved"),
                 status_code=status.HTTP_200_OK,
             )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="room not found"
         )
-    except Exception as e:
-        raise e
+    except Exception:
+        return JSONResponse(
+            data="Failure to retrieve data",
+            status=status.HTTP_424_FAILED_DEPENDENCY
+            )

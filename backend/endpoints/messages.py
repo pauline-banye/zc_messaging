@@ -1,16 +1,13 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
-from schema.message import Message, MessageRequest, MessageUpdate, Reaction
+from schema.message import Message, MessageRequest, Reaction, Thread #, MessageUpdate
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
-from utils.mssg_utils import get_mssg
+from utils.message_utils import MESSAGE_COLLECTION, get_message, get_room_messages
 from utils.room_utils import get_room_members
 
-
 router = APIRouter()
-
-MESSAGE_COLLECTION = "messages"
 
 
 @router.post(
@@ -85,10 +82,11 @@ async def send_message(
 @router.get(
     "/org/{org_id}/rooms/{room_id}/messages",
     response_model=ResponseModel,
-    status_code=status.HTTP_200_OK,
     responses={
-        404: {"detail": "Messages not found"},
-    },
+        status.HTTP_200_OK: {"detail": "Messages retrieved"},
+        status.HTTP_404_NOT_FOUND: {"detail": "Messages not found"},
+        status.HTTP_424_FAILED_DEPENDENCY: {"detail": "Failure to retrieve data"}
+    }
 )
 async def get_all_messages(
     org_id: str, 
@@ -101,40 +99,42 @@ async def get_all_messages(
         room_id: A unique identifier of the room where the message is being sent to.
 
     Returns:
-        HTTP_200_OK {messages retrieved}:
+        HTTP_200_OK {Messages retrieved}:
         A list containing data about all the messages in the collection.
-            {
-                "status": "success",
-                "message": "messages retrieved",
-                "data": [
-                    {
-                    "_id": "61b8ca9878fb01b18fac140f",
-                    "created_at": "2021-12-15 20:49:52.445747",
-                    "files": [
-                        "https://cdn.iconscout.com/icon/free/png-256/"
-                    ],
+        {
+            "status": "success",
+            "message": "Messages retrieved",
+            "data": [
+                { 
+                    "_id": "61b8caec78fb01b18fac1410",
+                    "created_at": "2021-12-14 16:40:43.302519",
+                    "files": [],
                     "message_id": null,
                     "org_id": "619ba4671a5f54782939d384",
-                    "reactions": [],
+                    "reactions": [
+                        {
+                            "character": "wink",
+                            "sender_id": "6169704bc4133ddaa309dd07"
+                        }
+                    ],
                     "room_id": "619e28c31a5f54782939d59a",
                     "saved_by": [],
                     "sender_id": "61696f5ac4133ddaa309dcfe",
-                    "text": "test after switching back to Any",
+                    "text": "testing messages",
                     "threads": []
-                    }
-                ]
-
+                }
+            ]
+        }
     Raises:
-        HTTP_404_NOT_FOUND: "Messages not found"
+        HTTPException [404]: Messages not found
+        HTTPException [424]: Failure to retrieve data
     """
-    DB = DataStorage(org_id)
-    messages = await DB.read(MESSAGE_COLLECTION, {"org_id": org_id, "room_id": room_id})
-
+    messages = await get_room_messages(org_id, room_id)
     try:
         if messages:
             return JSONResponse(
                 content=ResponseModel.success(
-                    data=messages, message="messages retrieved"
+                    data=messages, message="Messages retrieved"
                 ),
                 status_code=status.HTTP_200_OK,
             )
@@ -142,17 +142,21 @@ async def get_all_messages(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={"Messages not found": messages},
         )
-    except Exception as e:
-        raise e
+    except Exception:
+        return JSONResponse(
+            data="Failure to retrieve data",
+            status=status.HTTP_424_FAILED_DEPENDENCY
+            )
 
 
 @router.get(
     "/org/{org_id}/rooms/{room_id}/messages/{message_id}",
     response_model=ResponseModel,
-    status_code=status.HTTP_200_OK,
     responses={
-        404: {"detail": "Message not found"},
-    },
+        status.HTTP_200_OK: {"detail": "Message retrieved"},
+        status.HTTP_404_NOT_FOUND: {"detail": "Message not found"},
+        status.HTTP_424_FAILED_DEPENDENCY: {"detail": "Failure to retrieve data"}
+    }
 )
 async def get_message_by_id(
     org_id: str, 
@@ -167,33 +171,38 @@ async def get_message_by_id(
         message_id: A unique identifier of the message to be retrieved
 
     Returns:
-        HTTP_200_OK {message retrieved}:
+        HTTP_200_OK {Message retrieved}:
         A dict containing data about the message in the collection based on the message schema.
-            {
-                "status": "success",
-                "message": "message retrieved",
-                "data": {
-                    "_id": "61bc6b6078fb01b18fac1427",
-                    "created_at": "2021-12-17 10:47:22.673050",
-                    "files": [],
-                    "message_id": null,
-                    "org_id": "619ba4671a5f54782939d384",
-                    "reactions": [],
-                    "room_id": "619e28c31a5f54782939d59a",
-                    "saved_by": [],
-                    "sender_id": "619ba4671a5f54782939d385",
-                    "text": "yet another check",
-                    "threads": []
+        {
+            "status": "success",
+            "message": "message retrieved",
+            "data": {
+                "_id": "61ba9b0378fb01b18fac1420",
+                "created_at": "2021-12-16 05:05:39.886322",
+                "files": [
+                    "https://cdn.iconscout.com/icon/free/png-256/"
+                ],
+                "message_id": null,
+                "org_id": "619ba4671a5f54782939d384",
+                "reactions": [
+                    {
+                        "character": "rotfl",
+                        "sender_id": "61696f5ac4133ddaa309dcfe"
                     }
-                }
-                
+                ],
+                "room_id": "619e28c31a5f54782939d59a",
+                "saved_by": null,
+                "sender_id": "619ba4671a5f54782939d385",
+                "text": "testing update endpoint",
+                "threads": []
+            }
+        }
+             
     Raises:
-        HTTP_HTTP_404_NOT_FOUND: Message not found
+        HTTPException [404]: Message not found
+        HTTPException [424]: Failure to retrieve data
     """
-    DB = DataStorage(org_id)
-    message = await DB.read(
-        MESSAGE_COLLECTION, {"org_id": org_id, "room_id": room_id, "_id": message_id}
-    )
+    message = await get_message(org_id, room_id, message_id)
     try:
         if message:
             return JSONResponse(
@@ -206,8 +215,11 @@ async def get_message_by_id(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={"Message not found": message},
         )
-    except Exception as e:
-        raise e
+    except Exception:
+        return JSONResponse(
+            data="Failure to retrieve data",
+            status=status.HTTP_424_FAILED_DEPENDENCY
+            )
    
 
 @router.put(
@@ -215,15 +227,16 @@ async def get_message_by_id(
     response_model=ResponseModel,
     responses={
         status.HTTP_200_OK: {"description": "message edited"},
-        status.HTTP_404_NOT_FOUND: {"description": "message not found"},
-        status.HTTP_403_FORBIDDEN: {
+        status.HTTP_401_UNAUTHORIZED: {
             "description": "you are not authorized to edit this message"
         },
+        status.HTTP_404_NOT_FOUND: {"description": "message not found"},
         status.HTTP_424_FAILED_DEPENDENCY: {"description": "message not edited"},
     },
 )
 async def update_message(
-    request: MessageUpdate,
+    # request: MessageUpdate,
+    request: Thread,
     org_id: str,
     room_id: str,
     message_id: str,
@@ -251,26 +264,26 @@ async def update_message(
             }
 
     Raises:
+        HTTP_401_UNAUTHORIZED: You are not authorized to edit this message
         HTTP_404_FAILED_DEPENDENCY: Message not found
         HTTP_424_FAILED_DEPENDENCY: Message not edited
-        HTTP_403_FORBIDDEN: You are not authorized to edit this message
     """
     DB = DataStorage(org_id)
-    message = await get_mssg(org_id=org_id, room_id=room_id, message_id=message_id)
+    message = await get_message(org_id, room_id, message_id)
 
-    if not message:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
-        )
-
-    payload = request.dict()
-    if message["sender_id"] != payload["sender_id"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not authorized to edit this message",
-        )
-        
     try:
+        if not message:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
+            )
+
+        payload = request.dict()
+        if message["sender_id"] != payload["sender_id"]:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You are not authorized to edit this message",
+            )
+        
         edit_message = await DB.update(
             MESSAGE_COLLECTION, document_id=message_id, data=payload
         )
@@ -295,8 +308,110 @@ async def update_message(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
             detail={"message not edited": edit_message},
         )
-    except Exception as e:
-        raise e
+    except Exception:
+        return JSONResponse(
+            data="Failure to retrieve data",
+            status=status.HTTP_424_FAILED_DEPENDENCY
+            )
+
+
+# @router.put(
+#     "/org/{org_id}/rooms/{room_id}/messages/{message_id}",
+#     response_model=ResponseModel,
+#     responses={
+#         status.HTTP_200_OK: {"description": "message edited"},
+#         status.HTTP_401_UNAUTHORIZED: {
+#             "description": "you are not authorized to edit this message"
+#         },
+#         status.HTTP_404_NOT_FOUND: {"description": "message not found"},
+#         status.HTTP_424_FAILED_DEPENDENCY: {"description": "message not edited"},
+#     },
+# ) # fully functional
+# async def update_message(
+#     request: MessageUpdate,
+#     org_id: str,
+#     room_id: str,
+#     message_id: str,
+#     background_tasks: BackgroundTasks,
+# ):
+#     """
+#     Update a message
+
+#     Args:
+#         request: Request object
+#         org_id: A unique identifier of the organization.
+#         room_id: A unique identifier of the room.
+#         sender_id: A unique identifier of the sender.
+#         message_id: A unique identifier of the message that is being edited.
+
+#     Returns:
+#         HTTP_200_OK {message updated successfully}:
+#         A dict containing data about the message that was updated (response_output).
+#             {
+#                 "room_id": "619e28c31a5f54782939d59a",
+#                 "message_id": "61bc5e5378fb01b18fac1426",
+#                 "sender_id": "619ba4671a5f54782939d385",
+#                 "text": "testing edits",
+#                 "edited_at": "2021-12-17 11:47:22.678046"
+#             }
+
+#     Raises:
+#         HTTP_401_UNAUTHORIZED: You are not authorized to edit this message
+#         HTTP_404_FAILED_DEPENDENCY: Message not found
+#         HTTP_424_FAILED_DEPENDENCY: Message not edited
+#     """
+#     DB = DataStorage(org_id)
+#     message = await get_message(org_id, room_id, message_id)
+
+#     try:
+#         if not message:
+#             raise HTTPException(
+#                 status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
+#             )
+
+#         payload = request.dict()
+#         if message["sender_id"] != payload["sender_id"]:
+#             raise HTTPException(
+#                 status_code=status.HTTP_401_UNAUTHORIZED,
+#                 detail="You are not authorized to edit this message",
+#             )
+        
+#         edit_message = await DB.update(
+#             MESSAGE_COLLECTION, document_id=message_id, data=payload
+#         )
+#         if edit_message:
+#             data = {
+#                 "room_id": room_id,
+#                 "message_id": message_id,
+#                 "sender_id": payload["sender_id"],
+#                 "text": payload["text"],
+#                 "edited_at": payload["edited_at"],
+#             }
+#             background_tasks.add_task(
+#                 centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, data
+#             )  # publish to centrifugo in the background
+#             return JSONResponse(
+#                 content=ResponseModel.success(
+#                     data=data, message="message edited"
+#                 ),
+#                 status_code=status.HTTP_200_OK,
+#             )
+#         raise HTTPException(
+#             status_code=status.HTTP_424_FAILED_DEPENDENCY,
+#             detail={"message not edited": edit_message},
+#         )
+#     except Exception:
+#         return JSONResponse(
+#             data="Failure to retrieve data",
+#             status=status.HTTP_424_FAILED_DEPENDENCY
+#             )
+
+
+
+
+
+
+
 
 
 @router.put(
@@ -304,10 +419,12 @@ async def update_message(
     response_model=ResponseModel,
     responses={
         status.HTTP_200_OK: {"description": "reaction added"},
-        status.HTTP_403_FORBIDDEN: {"description": "invalid room member"},
+        status.HTTP_200_OK: {"description": "reaction removed"},
+        status.HTTP_401_UNAUTHORIZED: {"description": "invalid room member"},
         status.HTTP_404_NOT_FOUND: {"description": "message not found"},
-        status.HTTP_424_FAILED_DEPENDENCY: {"description": "Message not updated"}
-        },
+        status.HTTP_424_FAILED_DEPENDENCY: {"description": "Message not updated"},
+        status.HTTP_424_FAILED_DEPENDENCY: {"description": "Failure to retrieve data"}
+    },
 )
 async def add_reaction(
     request: Reaction,
@@ -318,10 +435,10 @@ async def add_reaction(
 ):
     """
     Checks if the user reacting to the message is a member of the room.
-    Add/removes a reaction to/from a message. 
-    If a reaction is added, a payload consisting of the sender_id and character is added to the reactions array.
+    Add/removes a reaction to/from a message.
+    If a payload consisting of the sender_id and character is added to the reactions array.
     If the same payload is already in the reactions array, the reaction is removed.
-    
+
     Args:
         request: Request object
         org_id: A unique identifier of the organization.
@@ -330,7 +447,7 @@ async def add_reaction(
 
     Returns:
         - For reactions added.
- 
+
         HTTP_200_OK {reaction added}:
         A dict containing data about the reaction that was added (response_output).
         {
@@ -349,7 +466,7 @@ async def add_reaction(
         }
 
         - For removing reactions.
-           
+
         HTTP_200_OK {reaction removed}:
         A dict containing data about the reaction that was removed (response_output).
         {
@@ -366,90 +483,96 @@ async def add_reaction(
                 ]
             }
         }
-                
+
         Raises:
-            HTTP_424_FAILED_DEPENDENCY: Message not updated
+            HTTPException [401]: Invalid room member
+            HTTPException [404]: Message not found
+            HTTPException [424]: Message not updated
+            HTTPException [424]: Failure to retrieve data
     """
     DB = DataStorage(org_id)
-    message = await get_mssg(org_id=org_id, room_id=room_id, message_id=message_id) # retrieve message
-    if not message:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
-        )
-    react = message["reactions"]
-
-    members = await get_room_members(org_id=org_id, room_id=room_id) # get room members
-    payload = {
-        "sender_id": request.sender_id,
-        "character": request.character
-    }
-
-    if payload["sender_id"] not in members: # check if the user reacting to message is a room member
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="invalid room member"
-        )
-
+    members = await get_room_members(org_id, room_id)
+    message = await get_message(org_id, room_id, message_id)
+    
     try:
-        if payload not in react: # check if reaction is already in the message reactions array
+        if not message:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Message not found"
+            )
+        react = message["reactions"]
+    
+        payload = {"sender_id": request.sender_id, "character": request.character}
+        if (
+            payload["sender_id"] not in members
+        ):  # check if the user reacting to message is a room member
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="invalid room member"
+            )
 
-            react.append(payload) # add reaction to reactions array
-            message_obj = await DB.update(
+        if (
+            payload not in react
+        ):  # check if reaction is already in the message reactions array
+
+            react.append(payload)  # add reaction to reactions array
+            added = await DB.update(
                 MESSAGE_COLLECTION, document_id=message_id, data={"reactions": react}
             )
-            if message_obj:
+            if added:
                 data = {
                     "room_id": room_id,
                     "message_id": message_id,
-                    "reactions" : [
+                    "reactions": [
                         {
                             "sender_id": payload["sender_id"],
-                            "character": payload["character"]
+                            "character": payload["character"],
                         }
-                    ]
+                    ],
                 }
                 background_tasks.add_task(
                     centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, data
                 )  # publish to centrifugo in the background
-
                 return JSONResponse(
-                    content=ResponseModel.success(
-                        data=data, message="reaction added"
-                    ),
-                    status_code=status.HTTP_200_OK,
+                    content=ResponseModel.success(data=data, message="reaction added"),
+                    status_code=status.HTTP_200_OK
                 )
             raise HTTPException(
                 status_code=status.HTTP_424_FAILED_DEPENDENCY,
-                detail={"Message not updated": message_obj},
+                detail={"Reaction not added"}
             )
-        
-        react.remove(payload) # remove reaction from reactions array
-        message_obj = await DB.update(
+
+        react.remove(payload)  # remove reaction from reactions array
+        removed = await DB.update(
             MESSAGE_COLLECTION, document_id=message_id, data={"reactions": react}
         )
-        if message_obj:
+        if removed:
             data = {
                 "room_id": room_id,
                 "message_id": message_id,
-                "reactions" : [
+                "reactions": [
                     {
                         "sender_id": payload["sender_id"],
-                        "character": payload["character"]
+                        "character": payload["character"],
                     }
                 ]
             }
             background_tasks.add_task(
                 centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, data
             )  # publish to centrifugo in the background
+
             return JSONResponse(
-                content=ResponseModel.success(
-                    data=data, message="reaction removed"
-                ),
+                content=ResponseModel.success(data=data, 
+                message="reaction removed"),
                 status_code=status.HTTP_200_OK,
             )
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={"Message not updated": message_obj},
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail={"Reaction not removed"},
         )
-    except Exception as e:
-        raise e
-        
+
+    except Exception:
+        return JSONResponse(
+            data="Failure to retrieve data",
+            status=status.HTTP_424_FAILED_DEPENDENCY
+            )

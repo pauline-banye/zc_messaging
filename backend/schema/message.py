@@ -1,7 +1,7 @@
 import asyncio
 import concurrent.futures
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 from fastapi import HTTPException, status
 from pydantic import AnyHttpUrl, BaseModel, Field, root_validator
@@ -15,12 +15,24 @@ class Reaction(BaseModel):
     character: str
 
 
+# class MessageRequest(BaseModel):
+#     """
+#     Provides a base model for all threads
+#     """
+
+#     text: str
+#     reactions: List[Reaction] = []
+#     files: List[AnyHttpUrl] = []
+#     saved_by: List[str] = []
+#     created_at: str = str(datetime.utcnow())
+
+
 class MessageRequest(BaseModel):
     """
     Provides a base model for all threads
     """
 
-    text: str
+    text: Optional[str]
     reactions: List[Reaction] = []
     files: List[AnyHttpUrl] = []
     saved_by: List[str] = []
