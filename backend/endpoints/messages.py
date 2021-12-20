@@ -1,5 +1,5 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
-from schema.message import Message, MessageRequest, MessageUpdate, Reaction
+from schema.message import Message, MessageRequest, MessageUpdate, Reaction, Thread
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
@@ -361,7 +361,7 @@ async def update_message(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="You are not authorized to edit this message",
         )
-
+    
     edited_message = await DB.update(
         MESSAGE_COLLECTION, document_id=message_id, data=payload
     )

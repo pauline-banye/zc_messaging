@@ -6,6 +6,7 @@ from typing import List, Optional
 from fastapi import HTTPException, status
 from pydantic import AnyHttpUrl, BaseModel, Field, root_validator
 from utils.room_utils import get_room
+from utils.message_utils import get_message
 
 
 class Reaction(BaseModel):
@@ -26,17 +27,6 @@ class MessageRequest(BaseModel):
     saved_by: List[str] = []
     created_at: str = str(datetime.utcnow())
 
-
-# class MessageRequest(BaseModel):
-#     """
-#     Provides a base model for all threads
-#     """
-
-#     text: Optional[str]
-#     reactions: List[Reaction] = []
-#     files: List[AnyHttpUrl] = []
-#     saved_by: List[str] = []
-#     created_at: str = str(datetime.utcnow())
 
 
 class Thread(MessageRequest):
@@ -69,6 +59,8 @@ class Thread(MessageRequest):
         sender_id = values.get("sender_id")
         org_id = values.get("org_id")
         room_id = values.get("room_id")
+        print (room_id)
+        # message_id = values.get("message_id")
         with concurrent.futures.ThreadPoolExecutor(1) as executor:
             future = executor.submit(asyncio.run, get_room(org_id, room_id))
             room = future.result()
@@ -102,5 +94,5 @@ class MessageUpdate(BaseModel):
 
     text: str
     sender_id: str
-    edited : bool 
+    edited : bool = True 
     
