@@ -396,11 +396,11 @@ async def update_message(
                 content=ResponseModel.success(data=new_data, message="message edited"),
                 status_code=status.HTTP_200_OK,
             )
-        except Exception:
+        except Exception as error:
             raise HTTPException(
                 status_code=status.HTTP_424_FAILED_DEPENDENCY,
                 detail={"Failure to publish to centrifugo"},
-            )
+            ) from error
     raise HTTPException(
         status_code=status.HTTP_424_FAILED_DEPENDENCY,
         detail={"message not edited": edited_message},

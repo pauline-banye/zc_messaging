@@ -102,3 +102,4 @@ class MessageUpdate(BaseModel):
 
     text: str
     sender_id: str
+    

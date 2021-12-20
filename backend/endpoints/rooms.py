@@ -303,3 +303,4 @@ async def get_room_by_id(org_id: str, room_id: str):
             status=status.HTTP_424_FAILED_DEPENDENCY,
             detail=e,
         )
+        
