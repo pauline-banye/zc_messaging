@@ -15,28 +15,28 @@ class Reaction(BaseModel):
     character: str
 
 
-# class MessageRequest(BaseModel):
-#     """
-#     Provides a base model for all threads
-#     """
-
-#     text: str
-#     reactions: List[Reaction] = []
-#     files: List[AnyHttpUrl] = []
-#     saved_by: List[str] = []
-#     created_at: str = str(datetime.utcnow())
-
-
 class MessageRequest(BaseModel):
     """
     Provides a base model for all threads
     """
 
-    text: Optional[str]
+    text: str
     reactions: List[Reaction] = []
     files: List[AnyHttpUrl] = []
     saved_by: List[str] = []
     created_at: str = str(datetime.utcnow())
+
+
+# class MessageRequest(BaseModel):
+#     """
+#     Provides a base model for all threads
+#     """
+
+#     text: Optional[str]
+#     reactions: List[Reaction] = []
+#     files: List[AnyHttpUrl] = []
+#     saved_by: List[str] = []
+#     created_at: str = str(datetime.utcnow())
 
 
 class Thread(MessageRequest):
@@ -102,4 +102,5 @@ class MessageUpdate(BaseModel):
 
     text: str
     sender_id: str
+    edited : bool 
     
