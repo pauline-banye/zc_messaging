@@ -172,14 +172,13 @@ async def join_room(
     )
     
 
-
 @router.get(
     "/org/{org_id}/rooms",
     response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
     responses={
-        status.HTTP_200_OK: {"detail": {"rooms": "list of rooms"}},
-        status.HTTP_404_NOT_FOUND: {"detail": "failure to retrieve rooms"},
-        status.HTTP_424_FAILED_DEPENDENCY: {"detail": "failure to retrieve data"},
+        404: {"detail": "failure to retrieve rooms"},
+        424: {"detail": "failure to retrieve data"},
     },
 )
 async def get_all_rooms(org_id: str):
@@ -232,21 +231,20 @@ async def get_all_rooms(org_id: str):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Failure to retrieve rooms",
         )
-    except HTTPException as e:
-        return JSONResponse(
+    except HTTPException as error:
+        raise HTTPException(
             data="Failure to retrieve data",
             status=status.HTTP_424_FAILED_DEPENDENCY,
-            detail=e,
-        )
+        ) from error
 
 
 @router.get(
     "/org/{org_id}/rooms/{room_id}",
     response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
     responses={
-        status.HTTP_200_OK: {"detail": {"room_id": "room found"}},
-        status.HTTP_404_NOT_FOUND: {"detail": "room not found"},
-        status.HTTP_424_FAILED_DEPENDENCY: {"detail": "failure to retrieve data"},
+        404: {"detail": "room not found"},
+        424: {"detail": "failure to retrieve data"},
     },
 )
 async def get_room_by_id(org_id: str, room_id: str):
@@ -297,10 +295,9 @@ async def get_room_by_id(org_id: str, room_id: str):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="room not found"
         )
-    except HTTPException as e:
-        return JSONResponse(
+    except HTTPException as error:
+        raise HTTPException(
             data="Failure to retrieve data",
             status=status.HTTP_424_FAILED_DEPENDENCY,
-            detail=e,
-        )
+        ) from error
         

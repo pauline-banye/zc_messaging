@@ -85,8 +85,8 @@ async def send_message(
     response_model=ResponseModel,
     status_code=status.HTTP_200_OK,
     responses={
-        status.HTTP_404_NOT_FOUND: {"detail": "Messages not found"},
-        status.HTTP_424_FAILED_DEPENDENCY: {"detail": "Failure to retrieve data"},
+        404: {"detail": "Messages not found"},
+        424: {"detail": "Failure to retrieve data"},
     },
 )
 async def get_all_messages(
@@ -152,8 +152,8 @@ async def get_all_messages(
     response_model=ResponseModel,
     status_code=status.HTTP_200_OK,
     responses={
-        status.HTTP_404_NOT_FOUND: {"detail": "Message not found"},
-        status.HTTP_424_FAILED_DEPENDENCY: {"detail": "Failure to retrieve data"},
+        404: {"detail": "Message not found"},
+        424: {"detail": "Failure to retrieve data"},
     },
 )
 async def get_message_by_id(
@@ -221,12 +221,12 @@ async def get_message_by_id(
     response_model=ResponseModel,
     status_code=status.HTTP_200_OK,
     responses={
-        status.HTTP_401_UNAUTHORIZED: {
+        401: {
             "description": "you are not authorized to edit this message"
         },
-        status.HTTP_404_NOT_FOUND: {"description": "message not found"},
-        status.HTTP_424_FAILED_DEPENDENCY: {"description": "message not edited"},
-        status.HTTP_424_FAILED_DEPENDENCY: {
+        404: {"description": "message not found"},
+        424: {"description": "message not edited"},
+        424: {
             "description": "Failure to publish to centrifugo"
         },
     },
@@ -311,14 +311,10 @@ async def update_message(
     response_model=ResponseModel,
     status_code=status.HTTP_200_OK,
     responses={
-        status.HTTP_401_UNAUTHORIZED: {
-            "description": "you are not authorized to edit this message"
-        },
-        status.HTTP_404_NOT_FOUND: {"description": "message not found"},
-        status.HTTP_424_FAILED_DEPENDENCY: {"description": "message not edited"},
-        status.HTTP_424_FAILED_DEPENDENCY: {
-            "description": "Failure to publish to centrifugo"
-        },
+        401: {"description": "you are not authorized to edit this message"},
+        404: {"description": "message not found"},
+        424: {"description": "message not edited"},
+        424: {"description": "Failure to publish to centrifugo"},
     },
 )
 async def update_message(
@@ -402,12 +398,10 @@ async def update_message(
     response_model=ResponseModel,
     status_code=status.HTTP_200_OK,
     responses={
-        status.HTTP_401_UNAUTHORIZED: {"description": "invalid room member"},
-        status.HTTP_404_NOT_FOUND: {"description": "message not found"},
-        status.HTTP_424_FAILED_DEPENDENCY: {"description": "Message not updated"},
-        status.HTTP_424_FAILED_DEPENDENCY: {
-            "description": "Failure to publish to centrifugo"
-        },
+        401: {"description": "invalid room member"},
+        404: {"description": "message not found"},
+        424: {"description": "Message not updated"},
+        424: {"description": "Failure to publish to centrifugo"},
     },
 )
 async def add_or_remove_reaction(
@@ -550,14 +544,10 @@ async def add_or_remove_reaction(
     response_model=ResponseModel,
     status_code=status.HTTP_200_OK,
     responses={
-        status.HTTP_401_UNAUTHORIZED: {
-            "description": "Invalid room member"
-        },
-        status.HTTP_404_NOT_FOUND: {"description": "message not found"},
-        status.HTTP_424_FAILED_DEPENDENCY: {"description": "reaction not added"},
-        status.HTTP_424_FAILED_DEPENDENCY: {
-            "description": "Failure to publish to centrifugo"
-        },
+        401: {"description": "Invalid room member"},
+        404: {"description": "message not found"},
+        424: {"description": "reaction not added"},
+        424: {"description": "Failure to publish to centrifugo"},
     },
 )
 async def add_reaction(
@@ -663,13 +653,13 @@ async def add_reaction(
 @router.delete(
     "/org/{org_id}/rooms/{room_id}/messages/{message_id}/reactions/remove",
     response_model=ResponseModel,
-status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_200_OK,
     responses={
-        status.HTTP_401_UNAUTHORIZED: {"description": "Invalid room member"},
-        status.HTTP_404_NOT_FOUND: {"description": "Reaction not found"},
-        status.HTTP_404_NOT_FOUND: {"description": "message not found"},
-        status.HTTP_424_FAILED_DEPENDENCY: {"description": "reaction not removed"},
-        status.HTTP_424_FAILED_DEPENDENCY: {"description": "Failure to publish to centrifugo"},
+        401: {"description": "Invalid room member"},
+        404: {"description": "Reaction not found"},
+        404: {"description": "message not found"},
+        424: {"description": "reaction not removed"},
+        424: {"description": "Failure to publish to centrifugo"},
     },
 )
 async def remove_reaction(
