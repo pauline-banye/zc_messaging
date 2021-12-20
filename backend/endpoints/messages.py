@@ -231,7 +231,7 @@ async def get_message_by_id(
         },
     },
 )
-async def update_message(
+async def update_message_old(
     request: MessageUpdate,
     org_id: str,
     room_id: str,
@@ -306,91 +306,7 @@ async def update_message(
         )
 
 
-@router.put(
-    "/org/{org_id}/rooms/{room_id}/messages/{message_id}",
-    response_model=ResponseModel,
-    status_code=status.HTTP_200_OK,
-    responses={
-        401: {"description": "you are not authorized to edit this message"},
-        404: {"description": "message not found"},
-        424: {"description": "message not edited"},
-        424: {"description": "Failure to publish to centrifugo"},
-    },
-)
-async def update_message(
-    request: MessageUpdate,
-    org_id: str,
-    room_id: str,
-    message_id: str,
-    background_tasks: BackgroundTasks,
-):
-    """
-    Update a message
 
-    Args:
-        request: Request object
-        org_id: A unique identifier of the organization.
-        room_id: A unique identifier of the room.
-        message_id: A unique identifier of the message that is being edited.
-        background_tasks: A daemon thread for publishing to centrifugo
-
-    Returns:
-        HTTP_200_OK {message updated successfully}:
-        A dict containing data about the message that was edited.
-            {
-                "room_id": "619e28c31a5f54782939d59a",
-                "message_id": "61ba9b0378fb01b18fac1420",
-                "sender_id": "619ba4671a5f54782939d385",
-                "text": "xxxxxxxxxxxxxxxxx"
-            }
-
-    Raises:
-        HTTPException [401]: You are not authorized to edit this message
-        HTTPException [404]: Message not found
-        HTTPException [424]: Message not edited
-        HTTPException [424]: Failure to publish to centrifugo
-    """
-    DB = DataStorage(org_id)
-    message = await get_message(org_id, room_id, message_id)
-    if not message:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
-        )
-
-    payload = request.dict()
-    if message["sender_id"] != payload["sender_id"]:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="You are not authorized to edit this message",
-        )
-
-    edited_message = await DB.update(
-        MESSAGE_COLLECTION, document_id=message_id, data=payload
-    )
-    if edited_message:
-        new_data = {
-            "room_id": room_id,
-            "message_id": message_id,
-            "sender_id": payload["sender_id"],
-            "text": payload["text"],
-        }
-        try:
-            background_tasks.add_task(
-                centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, new_data
-            )  # publish to centrifugo in the background
-            return JSONResponse(
-                content=ResponseModel.success(data=new_data, message="message edited"),
-                status_code=status.HTTP_200_OK,
-            )
-        except Exception as error:
-            raise HTTPException(
-                status_code=status.HTTP_424_FAILED_DEPENDENCY,
-                detail={"Failure to publish to centrifugo"},
-            ) from error
-    raise HTTPException(
-        status_code=status.HTTP_424_FAILED_DEPENDENCY,
-        detail={"message not edited": edited_message},
-    )
 
 
 @router.put(
@@ -681,13 +597,13 @@ async def remove_reaction(
 
     Returns:
         HTTP_200_OK {reaction removed successfully}:
-A dict containing data about the reaction that was removed.
-    {
-        "room_id": "619e28c31a5f54782939d59a",
-        "message_id": "61ba9b0378fb01b18fac1420",
-        "sender_id": "619ba4671a5f54782939d385",
-        "character": "lol"
-    }
+        A dict containing data about the reaction that was removed.
+        {
+            "room_id": "619e28c31a5f54782939d59a",
+            "message_id": "61ba9b0378fb01b18fac1420",
+            "sender_id": "619ba4671a5f54782939d385",
+            "character": "lol"
+        }
 
     Raises:
         HTTPException [401]: Invalid room member
