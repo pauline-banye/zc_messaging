@@ -178,7 +178,6 @@ async def join_room(
     status_code=status.HTTP_200_OK,
     responses={
         404: {"detail": "failure to retrieve rooms"},
-        424: {"detail": "failure to retrieve data"},
     },
 )
 async def get_all_rooms(org_id: str):
@@ -218,25 +217,18 @@ async def get_all_rooms(org_id: str):
         HTTPException [424]: Failure to retrieve data
     """
     rooms = await get_org_rooms(org_id)
-
-    try:
-        if rooms:
-            return JSONResponse(
-                content=ResponseModel.success(
-                    data=rooms, message="list of rooms in the org"
-                ),
-                status_code=status.HTTP_200_OK,
-            )
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Failure to retrieve rooms",
+    if rooms:
+        return JSONResponse(
+            content=ResponseModel.success(
+                data=rooms, message="list of rooms in the org"
+            ),
+            status_code=status.HTTP_200_OK,
         )
-    except HTTPException as error:
-        raise HTTPException(
-            data="Failure to retrieve data",
-            status=status.HTTP_424_FAILED_DEPENDENCY,
-        ) from error
-
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Failure to retrieve rooms",
+    )
+   
 
 @router.get(
     "/org/{org_id}/rooms/{room_id}",
@@ -244,7 +236,6 @@ async def get_all_rooms(org_id: str):
     status_code=status.HTTP_200_OK,
     responses={
         404: {"detail": "room not found"},
-        424: {"detail": "failure to retrieve data"},
     },
 )
 async def get_room_by_id(org_id: str, room_id: str):
@@ -284,20 +275,16 @@ async def get_room_by_id(org_id: str, room_id: str):
         HTTPException [404]: Room not found
         HTTPException [424]: Failure to retrieve data
     """
-    room = await get_room(org_id, room_id)
-
-    try:
-        if room:
-            return JSONResponse(
-                content=ResponseModel.success(data=room, message="room found"),
-                status_code=status.HTTP_200_OK,
-            )
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="room not found"
+    room = await get_room(org_id, room_id)   
+    if room:
+        return JSONResponse(
+            content=ResponseModel.success(
+                data=room, message="room found"
+            ),
+            status_code=status.HTTP_200_OK,
         )
-    except HTTPException as error:
-        raise HTTPException(
-            data="Failure to retrieve data",
-            status=status.HTTP_424_FAILED_DEPENDENCY,
-        ) from error
-        
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, 
+        detail="room not found"
+    )
+    

@@ -1,7 +1,7 @@
 import asyncio
 import concurrent.futures
 from datetime import datetime
-from typing import List, Optional
+from typing import Dict, List, Optional, Set
 
 from fastapi import HTTPException, status
 from pydantic import AnyHttpUrl, BaseModel, Field, root_validator
@@ -9,12 +9,51 @@ from utils.room_utils import get_room
 from utils.message_utils import get_message
 
 
+
+
+class MyBaseModel(BaseModel):
+    def __hash__(self):  # make hashable BaseModel subclass
+        return hash((type(self),) + tuple(self.__dict__.values()))
+
+
 class Reaction(BaseModel):
-    """Provides the nested object for reactions to message"""
+    """
+    Provides the nested object for reactions to message
+    """
 
-    sender_id: str
     character: str
+    sender_id: str
 
+
+# class EmojieReactor(BaseModel):
+#     """Provides the nested object for emojis to message"""
+
+#     sender_id: List[str]
+    
+
+class ReactionNew(BaseModel):
+# class ReactionNew(MyBaseModel):
+    """
+    Provides the nested object for reactions to message
+    """
+
+    character: str
+    # sender_id: List[EmojieReactor]
+    # sender_id: List[str] = []
+    sender_id: Set[str] = set()
+    # sender_id: str
+    count : Optional[int] = None
+
+
+class NewMessageRequest(BaseModel):
+    """
+    Provides a base model for all threads
+    """
+
+    text: str
+    reactions: List[Reaction]
+    # reactions: Dict[Reaction]
+    
 
 class MessageRequest(BaseModel):
     """
