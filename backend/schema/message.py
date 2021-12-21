@@ -28,7 +28,6 @@ class MessageRequest(BaseModel):
     created_at: str = str(datetime.utcnow())
 
 
-
 class Thread(MessageRequest):
     """Provide structure for the thread schema
 
@@ -59,8 +58,6 @@ class Thread(MessageRequest):
         sender_id = values.get("sender_id")
         org_id = values.get("org_id")
         room_id = values.get("room_id")
-        print (room_id)
-        # message_id = values.get("message_id")
         with concurrent.futures.ThreadPoolExecutor(1) as executor:
             future = executor.submit(asyncio.run, get_room(org_id, room_id))
             room = future.result()
