@@ -47,7 +47,7 @@ class DataStorage:
             "collection_name": collection_name,
             "payload": data,
         }
-
+        
         try:
             response = requests.post(url=self.write_api, json=body)
         except requests.exceptions.RequestException as exception:
@@ -76,7 +76,7 @@ class DataStorage:
             "object_id": document_id,
             "payload": data,
         }
-
+        
         try:
             response = requests.put(url=self.write_api, json=body)
         except requests.exceptions.RequestException as exception:
@@ -114,7 +114,7 @@ class DataStorage:
             "plugin_id": self.plugin_id,
             "options": options,
         }
-
+        
         try:
             response = requests.post(url=self.read_query_api, json=body)
         except requests.exceptions.RequestException as exception:
@@ -143,7 +143,7 @@ class DataStorage:
             "collection_name": collection_name,
             "object_id": document_id,
         }
-
+        
         try:
             response = requests.post(url=self.delete_api, json=body)
         except requests.exceptions.RequestException as exception:

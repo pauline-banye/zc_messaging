@@ -25,9 +25,11 @@ async def create_room(
     org_id: str, member_id: str, request: RoomRequest, background_tasks: BackgroundTasks
 ):
     """Creates a room between users.
+
     Registers a new document to the database collection.
     Returns the document id if the room is successfully created or already exist
     while publishing to the user sidebar in the background
+
     Args:
         org_id (str): A unique identifier of an organisation
         request: A pydantic schema that defines the room request parameters
