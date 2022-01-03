@@ -7,6 +7,7 @@ from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
 from utils.message_utils import (MESSAGE_COLLECTION, get_message,
                                  get_room_messages)
+from utils.room_utils import get_room_members
 
 router = APIRouter()
 
@@ -1443,4 +1444,3 @@ async def add_reaction(
         detail={"Reaction already exists"}
     )
 
-   

@@ -80,6 +80,7 @@ async def get_room_members(org_id: str, room_id: str) -> dict:
     return {}
 
 
+
 async def get_member_starred_rooms(org_id: str, member_id: str) -> list:
     """Get all starred rooms of a user
 

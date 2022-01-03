@@ -6,7 +6,7 @@ from schema.response import ResponseModel
 from schema.room import Role, Room, RoomMember, RoomRequest, RoomType
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
-from utils.room_utils import ROOM_COLLECTION, get_room, get_org_rooms
+from utils.room_utils import ROOM_COLLECTION, get_room, get_org_rooms, get_room_members
 from utils.sidebar import sidebar
 
 router = APIRouter()
@@ -339,6 +339,7 @@ async def get_room_by_id(org_id: str, room_id: str):
 
     Returns:
         HTTP_200_OK (room found)
+        
         {
             "_id": "61bc094b78fb01b18fac1425",
             "created_at": "2021-12-17 03:10:26.620752",
@@ -375,5 +376,54 @@ async def get_room_by_id(org_id: str, room_id: str):
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND, 
         detail="room not found"
+    )
+
+
+
+@router.get(
+    "/org/{org_id}/rooms/{room_id}/users",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    responses={
+        404: {"detail": "Failure to retrieve room members"},
+    },
+)
+async def get_room_users(org_id: str, room_id: str):
+    """
+    Get room members.
+
+    Returns the list of room members if the room is found in the database
+    Raises HTTP_404_NOT_FOUND if the room is not found
+
+    Args:
+        org_id (str): A unique identifier of an organisation
+        room_id (str): A unique identifier of the room
+
+    Returns:
+        HTTP_200_OK (list of room members)
+        {
+            "619ba4671a5f54782939d385": {
+                "closed": false,
+                "role": "admin",
+                "starred": false
+            }
+        }
+
+    Raises:
+        HTTPException [404]: Room not found
+        HTTPException [424]: Failure to retrieve data
+    """
+    members = await get_room_members(org_id, room_id) 
+    if members and members.get("status_code") is None:
+        return JSONResponse(
+            content=ResponseModel.success(
+            data=members,
+            message="list of room members"
+            ),
+            status_code=status.HTTP_200_OK,
+        )
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Failure to retrieve room members",
     )
     
