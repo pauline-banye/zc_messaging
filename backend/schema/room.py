@@ -212,12 +212,13 @@ class Room(RoomRequest):
         Raises:
             HTTPException [400]: if id is not a valid object id
         """
-        if values.get("id") is not None:
-            if not ObjectId.is_valid(values.get("id")):
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="id is not a valid object id",
-                )
+        if values.get("id") is not None and not ObjectId.is_valid(
+            values.get("id")
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="id is not a valid object id",
+            )
 
         if not ObjectId.is_valid(values.get("org_id")):
             raise HTTPException(

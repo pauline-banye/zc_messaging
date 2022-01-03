@@ -6,7 +6,7 @@ from schema.response import ResponseModel
 from schema.room import Role, Room, RoomMember, RoomRequest, RoomType
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
-from utils.room_utils import ROOM_COLLECTION, get_room
+from utils.room_utils import ROOM_COLLECTION, get_room, get_org_rooms
 from utils.sidebar import sidebar
 
 router = APIRouter()
@@ -319,7 +319,6 @@ async def get_all_rooms(org_id: str):
         detail="Failure to retrieve rooms",
     )
 
-
 @router.get(
     "/org/{org_id}/rooms/{room_id}",
     response_model=ResponseModel,
@@ -365,10 +364,16 @@ async def get_room_by_id(org_id: str, room_id: str):
         HTTPException [404]: Room not found
         HTTPException [424]: Failure to retrieve data
     """
-    room = await get_room(org_id, room_id)
+    room = await get_room(org_id, room_id)   
     if room:
         return JSONResponse(
-            content=ResponseModel.success(data=room, message="room found"),
+            content=ResponseModel.success(
+                data=room, message="room found"
+            ),
             status_code=status.HTTP_200_OK,
         )
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="room not found")
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, 
+        detail="room not found"
+    )
+    

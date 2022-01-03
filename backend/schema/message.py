@@ -7,6 +7,14 @@ from fastapi import HTTPException, status
 from pydantic import AnyHttpUrl, BaseModel, Field, root_validator
 from utils.message_utils import get_message
 from utils.room_utils import get_room
+from utils.message_utils import get_message
+
+
+
+
+class MyBaseModel(BaseModel):
+    def __hash__(self):  # make hashable BaseModel subclass
+        return hash((type(self),) + tuple(self.__dict__.values()))
 
 
 class MyBaseModel(BaseModel):
@@ -54,6 +62,36 @@ class NewMessageRequest(BaseModel):
     reactions: List[Reaction]
     # reactions: Dict[Reaction]
 
+
+# class EmojieReactor(BaseModel):
+#     """Provides the nested object for emojis to message"""
+
+#     sender_id: List[str]
+    
+
+class ReactionNew(BaseModel):
+# class ReactionNew(MyBaseModel):
+    """
+    Provides the nested object for reactions to message
+    """
+
+    character: str
+    # sender_id: List[EmojieReactor]
+    # sender_id: List[str] = []
+    sender_id: Set[str] = set()
+    # sender_id: str
+    count : Optional[int] = None
+
+
+class NewMessageRequest(BaseModel):
+    """
+    Provides a base model for all threads
+    """
+
+    text: str
+    reactions: List[Reaction]
+    # reactions: Dict[Reaction]
+    
 
 class MessageRequest(BaseModel):
     """
@@ -181,3 +219,14 @@ class Message(Thread):
     """
 
     threads: List[Thread] = []
+
+
+class MessageUpdate(BaseModel):
+    """
+    Provides a base model to update messages
+    """
+
+    text: str
+    sender_id: str
+    edited : bool = True 
+    
