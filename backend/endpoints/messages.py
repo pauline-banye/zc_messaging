@@ -1,8 +1,9 @@
-from fastapi import APIRouter, BackgroundTasks, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, status, Body
 from schema.message import Message, MessageRequest, Emoji, Thread
 from schema.response import ResponseModel
+from schema.custom import ObjId
 from starlette.responses import JSONResponse
-from typing import Dict
+from typing import Dict, List
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
 from utils.message_utils import (MESSAGE_COLLECTION, get_message,
@@ -366,7 +367,7 @@ async def delete_message(
         background_tasks.add_task(
             centrifugo_client.publish,
             room_id,
-            remove_message,
+            message_id,
             Events.MESSAGE_DELETE,
         )
         return JSONResponse(
@@ -382,12 +383,8 @@ async def delete_message(
     )
     
            
-            
-    
-    
-
-
- 
+        
+        
 @router.put(
     "/org/{org_id}/rooms/{room_id}/messages/{message_id}/reactions/add",
     response_model=ResponseModel,
@@ -404,6 +401,7 @@ async def add_reaction(
     room_id: str,
     message_id: str,
     background_tasks: BackgroundTasks,
+    # members: List[ObjId] = Body(...),
 ):
     """
     Add a reaction to a message
@@ -439,8 +437,7 @@ async def add_reaction(
         HTTPException [424]: Reaction not added
     """
     DB = DataStorage(org_id)
-    # members = await get_room_members(org_id, room_id)
-    room = await get_room(org_id=org_id, room_id=room_id)
+    members = await get_room_members(org_id, room_id)
     message = await get_message(org_id, room_id, message_id)
 
     if not message:
@@ -448,7 +445,7 @@ async def add_reaction(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Message not found"
         )
-    reaction = message.get("emojis")
+    # reaction = message.get("emojis")
 
     new_reaction = {
         "name": request.name,
@@ -457,14 +454,14 @@ async def add_reaction(
         }
 
     if (
-        new_reaction["reactedUsersId"] not in room["room_members"].keys()
-        # new_reaction.get("reactedUsersId") not in room["room_members"].keys()
-        # new_reaction.get("reactedUsersId") not in members
+        new_reaction["reactedUsersId"] not in members
     ):  # check if the user reacting to message is a room member
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="invalid room member"
         )
+        
+    reaction = message["emojis"]
     if (
         new_reaction not in reaction
     ):  # check if reaction is already in the message reactions array

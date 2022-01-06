@@ -5,7 +5,8 @@ from typing import Any, Dict, List, Optional, Set
 
 from fastapi import HTTPException, status
 from pydantic import AnyHttpUrl, BaseModel, Field, root_validator
-from utils.message_utils import get_message
+from schema.custom import ObjId
+from schema.room import RoomMember
 from utils.room_utils import get_room
 from utils.message_utils import get_message
 
@@ -41,7 +42,8 @@ class Emoji(MyBaseModel):
     name: str
     count: int = None
     emoji: str
-    reactedUsersId: List[str] = []
+    # reactedUsersId: List[str] = []
+    reactedUsersId: Dict[ObjId, RoomMember]
 
 # class EmojieReactor(BaseModel):
 #     """Provides the nested object for emojis to message"""
