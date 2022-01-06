@@ -310,7 +310,83 @@ async def get_message_by_id(
         status_code=status.HTTP_404_NOT_FOUND,
         detail="Message not found",
     )
- 
+
+
+@router.delete(
+    "/org/{org_id}/rooms/{room_id}/message/{message_id}",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {"detail": "You are not authorized to delete this message"},
+        404: {"detail": "message not found"},
+        424: {"detail": "Failure to delete message"},
+    },
+)
+async def delete_message(
+    org_id: str, 
+    room_id: str, 
+    message_id: str, 
+    sender_id: str,
+    background_tasks: BackgroundTasks,
+):
+    """Deletes a message in the room.
+    Args:
+        org_id: (str): A unique identifier of an organisation
+        room_id: A unique identifier of the room.
+        message_id: A unique identifier of the message to be retrieved
+        sender_id: A unique identifier of the user who is deleting the message
+    Returns:
+        HTTP_200_OK {Message deleted}:        
+    Raises:
+        HTTPException [401]: You are not authorized to delete this message,
+        HTTPException [404]: Message not found,
+        HTTPException [424]: Failure to delete message,
+    """
+    DB = DataStorage(org_id)
+    message = await get_message(org_id, room_id, message_id)
+    if not message:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Message not found",
+        ) # check if message exists
+        
+    if message.get("sender_id") != sender_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="You are not authorized to delete this message",
+        ) # check if person deleting is the sender of the message
+    
+    remove_message = await DB.delete(
+        MESSAGE_COLLECTION,
+        document_id=message_id,
+    )
+    
+    if remove_message and remove_message.get("status_code") is None:
+        # publish to centrifugo in the background
+        background_tasks.add_task(
+            centrifugo_client.publish,
+            room_id,
+            remove_message,
+            Events.MESSAGE_DELETE,
+        )
+        return JSONResponse(
+            content=ResponseModel.success(
+                data=remove_message, 
+                message="message deleted"
+                ),
+            status_code=status.HTTP_200_OK,
+        )
+    raise HTTPException(
+        status_code=status.HTTP_424_FAILED_DEPENDENCY,
+        detail="Failure to delete message",
+    )
+    
+           
+            
+    
+    
+
+
  
 @router.put(
     "/org/{org_id}/rooms/{room_id}/messages/{message_id}/reactions/add",
