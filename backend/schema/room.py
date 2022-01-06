@@ -2,7 +2,7 @@ import asyncio
 import concurrent.futures
 from datetime import datetime
 from enum import Enum
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 from bson.objectid import ObjectId
 from fastapi import HTTPException, status
@@ -82,7 +82,8 @@ class RoomRequest(BaseModel):
         """
         if values["room_type"].upper() != RoomType.CHANNEL:
             room_type = values.get("room_type").upper()
-            room_members = values.get("room_members", {})
+            # room_members = values.get("room_members", {})
+            room_members = values.get("room_members", [])
             topic = values.get("topic")
             description = values.get("description")
             org_id = values.get("org_id")

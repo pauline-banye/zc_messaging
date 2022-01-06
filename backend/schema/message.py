@@ -12,9 +12,9 @@ from utils.message_utils import get_message
 
 
 
-class MyBaseModel(BaseModel):
-    def __hash__(self):  # make hashable BaseModel subclass
-        return hash((type(self),) + tuple(self.__dict__.values()))
+# class MyBaseModel(BaseModel):
+#     def __hash__(self):  # make hashable BaseModel subclass
+#         return hash((type(self),) + tuple(self.__dict__.values()))
 
 
 class MyBaseModel(BaseModel):
@@ -22,76 +22,99 @@ class MyBaseModel(BaseModel):
         return hash((type(self),) + tuple(self.__dict__.values()))
 
 
-class Emoji(BaseModel):
+# class Emoji(BaseModel):
+#     """
+#     Provides the nested object for reactions to message
+#     """
+
+#     name: str
+#     # count: Optional[int] = None
+#     count: int = None
+#     emoji: str
+#     reactedUsersId: List[str] = []
+
+class Emoji(MyBaseModel):
     """
     Provides the nested object for reactions to message
     """
 
     name: str
-    count: int
+    count: int = None
     emoji: str
     reactedUsersId: List[str] = []
 
-
 # class EmojieReactor(BaseModel):
 #     """Provides the nested object for emojis to message"""
 
 #     sender_id: List[str]
 
 
-class Reaction(BaseModel):
-    # class ReactionNew(MyBaseModel):
-    """
-    Provides the nested object for reactions to message
-    """
+# class Reaction(BaseModel):
+#     # class ReactionNew(MyBaseModel):
+#     """
+#     Provides the nested object for reactions to message
+#     """
 
-    character: str
-    # sender_id: List[EmojieReactor]
-    # sender_id: List[str] = []
-    sender_id: Set[str] = set()
-    # sender_id: str
-    count: Optional[int] = None
-
-
-class NewMessageRequest(BaseModel):
-    """
-    Provides a base model for all threads
-    """
-
-    text: str
-    reactions: List[Reaction]
-    # reactions: Dict[Reaction]
+#     character: str
+#     # sender_id: List[EmojieReactor]
+#     # sender_id: List[str] = []
+#     sender_id: Set[str] = set()
+#     # sender_id: str
+#     count: Optional[int] = None
 
 
-# class EmojieReactor(BaseModel):
-#     """Provides the nested object for emojis to message"""
+# class NewMessageRequest(BaseModel):
+#     """
+#     Provides a base model for all threads
+#     """
 
-#     sender_id: List[str]
+#     text: str
+#     reactions: List[Reaction]
+#     # reactions: Dict[Reaction]
+
+
+# # class EmojieReactor(BaseModel):
+# #     """Provides the nested object for emojis to message"""
+
+# #     sender_id: List[str]
     
 
-class ReactionNew(BaseModel):
-# class ReactionNew(MyBaseModel):
-    """
-    Provides the nested object for reactions to message
-    """
+# class ReactionNew(BaseModel):
+# # class ReactionNew(MyBaseModel):
+#     """
+#     Provides the nested object for reactions to message
+#     """
 
-    character: str
-    # sender_id: List[EmojieReactor]
-    # sender_id: List[str] = []
-    sender_id: Set[str] = set()
-    # sender_id: str
-    count : Optional[int] = None
+#     character: str
+#     # sender_id: List[EmojieReactor]
+#     # sender_id: List[str] = []
+#     sender_id: Set[str] = set()
+#     # sender_id: str
+#     count : Optional[int] = None
 
 
-class NewMessageRequest(BaseModel):
-    """
-    Provides a base model for all threads
-    """
+# class NewMessageRequest(BaseModel):
+#     """
+#     Provides a base model for all threads
+#     """
 
-    text: str
-    reactions: List[Reaction]
-    # reactions: Dict[Reaction]
+#     text: str
+#     reactions: List[Reaction]
+#     # reactions: Dict[Reaction]
     
+
+# class MessageRequest(BaseModel):
+#     """
+#     Provides a base model for all threads
+#     """
+
+#     sender_id: str
+#     emojis: List[Emoji] = []
+#     richUiData: Any = {}
+#     files: List[AnyHttpUrl] = []
+#     saved_by: List[str] = []
+#     timestamp: int
+#     created_at: str = str(datetime.utcnow())
 
 class MessageRequest(BaseModel):
     """
@@ -99,13 +122,12 @@ class MessageRequest(BaseModel):
     """
 
     sender_id: str
-    emojis: List[Emoji] = []
+    emojis: Set[Emoji]
     richUiData: Any = {}
     files: List[AnyHttpUrl] = []
     saved_by: List[str] = []
     timestamp: int
     created_at: str = str(datetime.utcnow())
-
 
 """
     This is the message model that will be used to create a message
@@ -220,13 +242,3 @@ class Message(Thread):
 
     threads: List[Thread] = []
 
-
-class MessageUpdate(BaseModel):
-    """
-    Provides a base model to update messages
-    """
-
-    text: str
-    sender_id: str
-    edited : bool = True 
-    

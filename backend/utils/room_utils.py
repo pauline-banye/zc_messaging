@@ -77,7 +77,8 @@ async def get_room_members(org_id: str, room_id: str) -> dict:
     response = await DB.read(ROOM_COLLECTION, query=query, options=options)
     if response and "status_code" not in response:
         return response.get("room_members", {})
-    return {}
+    return {}    
+    # return response or []
 
 
 
