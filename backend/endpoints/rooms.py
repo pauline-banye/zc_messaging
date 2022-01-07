@@ -495,6 +495,54 @@ async def get_room_by_id(org_id: str, room_id: str):
    
    
 @router.get(
+    "/org/{org_id}/rooms/{room_id}/memberslist",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    responses={
+        424: {"detail": "Failure to retrieve room members"},
+    },
+)
+async def get_members(org_id: str, room_id: str):
+    """
+    Get room members.
+    Returns all members in a room if the room is found in the database
+    Raises HTTP_424_FAILED_DEPENDENCY if there is an error retrieving the room members
+    Args:
+        org_id (str): A unique identifier of an organisation
+        room_id (str): A unique identifier of the room
+    Returns:
+        HTTP_200_OK (Room members)
+
+        {
+            "status": "success",
+            "message": "Room Members",
+            "data": [
+                "61696f5ac4133ddaa309dcfe",
+                "6169704bc4133ddaa309dd07",
+                "619ba4671a5f54782939d385",
+                "619baa5c1a5f54782939d386"
+            ]
+        }
+
+    Raises:
+        HTTPException [424]: Failed to retrieve room members
+    """
+    room_members = await get_room_members(org_id, room_id)
+
+    members = list(room_members)
+    if members:
+        return JSONResponse(
+            content=ResponseModel.success(data=members, message="Room Members"),
+            status_code=status.HTTP_200_OK,
+        )
+        
+    raise HTTPException(
+        status_code=status.HTTP_424_FAILED_DEPENDENCY,
+        detail="Failed to retrieve room members",
+    )
+
+
+@router.get(
     "/org/{org_id}/rooms/{room_id}/members",
     response_model=ResponseModel,
     status_code=status.HTTP_200_OK,
@@ -534,7 +582,7 @@ async def get_members(org_id: str, room_id: str):
         HTTPException [424]: Failed to retrieve room members
     """
     members = await get_room_members(org_id, room_id)
-
+    
     if members and members.get("status_code") is None:
         return JSONResponse(
             content=ResponseModel.success(data=members, message="Room Members"),

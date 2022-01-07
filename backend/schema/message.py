@@ -9,13 +9,10 @@ from schema.custom import ObjId
 from schema.room import RoomMember
 from utils.room_utils import get_room
 from utils.message_utils import get_message
+from schema.custom import ObjId
 
 
 
-
-# class MyBaseModel(BaseModel):
-#     def __hash__(self):  # make hashable BaseModel subclass
-#         return hash((type(self),) + tuple(self.__dict__.values()))
 
 
 class MyBaseModel(BaseModel):
@@ -29,94 +26,32 @@ class MyBaseModel(BaseModel):
 #     """
 
 #     name: str
-#     # count: Optional[int] = None
-#     count: int = None
+#     count: int
 #     emoji: str
 #     reactedUsersId: List[str] = []
 
-class Emoji(MyBaseModel):
+# class Emoji(MyBaseModel):
+#     """
+#     Provides the nested object for reactions to message
+#     """
+
+#     name: str
+#     count: Optional[int]# = None
+#     emoji: str
+#     # reactedUsersId: List[str] = []
+#     reactedUsersId: List[ObjId] = []
+
+class Emoji(BaseModel):
     """
     Provides the nested object for reactions to message
     """
 
     name: str
-    count: int = None
+    count: Optional[int]# = None
     emoji: str
-    # reactedUsersId: List[str] = []
-    reactedUsersId: Dict[ObjId, RoomMember]
+    reactedUsersId: List[str] = []
+    # reactedUsersId: List[ObjId] = []
 
-# class EmojieReactor(BaseModel):
-#     """Provides the nested object for emojis to message"""
-
-#     sender_id: List[str]
-
-
-# class Reaction(BaseModel):
-#     # class ReactionNew(MyBaseModel):
-#     """
-#     Provides the nested object for reactions to message
-#     """
-
-#     character: str
-#     # sender_id: List[EmojieReactor]
-#     # sender_id: List[str] = []
-#     sender_id: Set[str] = set()
-#     # sender_id: str
-#     count: Optional[int] = None
-
-
-# class NewMessageRequest(BaseModel):
-#     """
-#     Provides a base model for all threads
-#     """
-
-#     text: str
-#     reactions: List[Reaction]
-#     # reactions: Dict[Reaction]
-
-
-# # class EmojieReactor(BaseModel):
-# #     """Provides the nested object for emojis to message"""
-
-# #     sender_id: List[str]
-    
-
-# class ReactionNew(BaseModel):
-# # class ReactionNew(MyBaseModel):
-#     """
-#     Provides the nested object for reactions to message
-#     """
-
-#     character: str
-#     # sender_id: List[EmojieReactor]
-#     # sender_id: List[str] = []
-#     sender_id: Set[str] = set()
-#     # sender_id: str
-#     count : Optional[int] = None
-
-
-# class NewMessageRequest(BaseModel):
-#     """
-#     Provides a base model for all threads
-#     """
-
-#     text: str
-#     reactions: List[Reaction]
-#     # reactions: Dict[Reaction]
-    
-
-# class MessageRequest(BaseModel):
-#     """
-#     Provides a base model for all threads
-#     """
-
-#     sender_id: str
-#     emojis: List[Emoji] = []
-#     richUiData: Any = {}
-#     files: List[AnyHttpUrl] = []
-#     saved_by: List[str] = []
-#     timestamp: int
-#     created_at: str = str(datetime.utcnow())
 
 class MessageRequest(BaseModel):
     """
@@ -124,7 +59,7 @@ class MessageRequest(BaseModel):
     """
 
     sender_id: str
-    emojis: Set[Emoji]
+    emojis: List[Emoji] = []
     richUiData: Any = {}
     files: List[AnyHttpUrl] = []
     saved_by: List[str] = []

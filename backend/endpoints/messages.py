@@ -9,6 +9,7 @@ from utils.db import DataStorage
 from utils.message_utils import (MESSAGE_COLLECTION, get_message,
                                  get_room_messages)
 from utils.room_utils import get_room_members, get_room
+from schema.custom import ObjId
 
 router = APIRouter()
 
@@ -384,9 +385,9 @@ async def delete_message(
     
            
         
-        
+
 @router.put(
-    "/org/{org_id}/rooms/{room_id}/messages/{message_id}/reactions/add",
+    "/org/{org_id}/rooms/{room_id}/messages/{message_id}/reactions/addcheck",
     response_model=ResponseModel,
     status_code=status.HTTP_200_OK,
     responses={
@@ -401,7 +402,6 @@ async def add_reaction(
     room_id: str,
     message_id: str,
     background_tasks: BackgroundTasks,
-    # members: List[ObjId] = Body(...),
 ):
     """
     Add a reaction to a message
@@ -416,86 +416,109 @@ async def add_reaction(
     Returns:
         HTTP_200_OK {reaction added successfully}:
         A dict containing data about the reaction that was added.
-        
+
             {
                 "room_id": "619e28c31a5f54782939d59a",
                 "message_id": "61ba9b0378fb01b18fac1420",
-                "emojis": [
-                    "name": "smile",
-                    "count": 1,
-                    "reactedUsersId": [
-                        "619ba4671a5f54782939d385"
-                        ]
-                    "emoji": "👹"   
-                ]
+                "name": "lol",
+                "count": 1,
+                "emoji": "😂",
+                "reactedUsersId": ["619ba4671a5f54782939d385"]
             }
 
     Raises:
         HTTPException [401]: Invalid room member
         HTTPException [404]: Message not found
-        HTTPException [409]: Reaction already exists
         HTTPException [424]: Reaction not added
     """
     DB = DataStorage(org_id)
-    members = await get_room_members(org_id, room_id)
-    message = await get_message(org_id, room_id, message_id)
-
+    
+    message = await get_message(org_id, room_id, message_id) # retrieve message
     if not message:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Message not found"
-        )
-    # reaction = message.get("emojis")
-
-    new_reaction = {
-        "name": request.name,
-        "emoji": request.emoji,
-        "reactedUsersId": [request.reactedUsersId]
-        }
-
-    if (
-        new_reaction["reactedUsersId"] not in members
-    ):  # check if the user reacting to message is a room member
+            detail="Message not found",
+        ) # check if message exists
+    react = message.get("emojis") # get reactions
+    
+    new_reaction = request.dict()
+    
+    members = await get_room_members(org_id, room_id) # retrieve room members
+    # memberIds = list(members)
+    memberIds = str(list(members))
+    print (memberIds)
+    
+    if new_reaction["reactedUsersId"] not in memberIds:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="invalid room member"
+            detail="Invalid room member",
         )
-        
-    reaction = message["emojis"]
-    if (
-        new_reaction not in reaction
-    ):  # check if reaction is already in the message reactions array
-
-        reaction.append(new_reaction)  # add reaction to reactions array
+    
+    for reaction in react:
+        if reaction["name"] == new_reaction["name"]:
+            if reaction["reactedUsersId"] not in reaction["reactedUsersId"]:
+                reaction["reactedUsersId"].append(new_reaction["reactedUsersId"])
+                reaction["count"] += 1
+                
+                print (reaction)
+                
+                added = await DB.update(
+                    MESSAGE_COLLECTION, document_id=message_id, data={"emojis": reaction}
+                )
+                
+                if added:    
+                    data = {
+                        "room_id": room_id,
+                        "message_id": message_id,
+                        "emojis": [reaction],
+                    }
+                    background_tasks.add_task(
+                        centrifugo_client.publish,
+                        room_id,
+                        message_id,
+                        Events.MESSAGE_UPDATE,
+                    )
+                    return JSONResponse(
+                        content=ResponseModel.success(
+                            data=data, message="reaction added successfully"
+                        ),
+                        status_code=status.HTTP_200_OK,
+                    )
+                raise HTTPException(
+                    status_code=status.HTTP_424_FAILED_DEPENDENCY,
+                    detail="Failure to add reaction",
+                )
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Reaction already exists",
+            )
+            
+        react.append(new_reaction)
         added = await DB.update(
-            MESSAGE_COLLECTION, document_id=message_id, data={"reactions": reaction}
-        )
+            MESSAGE_COLLECTION, document_id=message_id, data={"emojis": new_reaction}
+            )
         if added:
             data = {
                 "room_id": room_id,
                 "message_id": message_id,
-                "emojis": [
-                    {
-                        "name": new_reaction["name"],
-                        "emoji": new_reaction["emoji"],
-                        "reactedUsersId": [new_reaction["reactedUsersId"]],
-                        "count": len(new_reaction["reactedUsersId"])
-                    }
-                ],
-            }
+                "emojis": [new_reaction],
+                }
             background_tasks.add_task(
-                centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, data
-            )  # publish to centrifugo in the background
-            return JSONResponse(
-                content=ResponseModel.success(data=data, message="reaction added"),
-                status_code=status.HTTP_200_OK,
+                centrifugo_client.publish,
+                room_id,
+                message_id,
+                Events.MESSAGE_UPDATE,
             )
-        raise HTTPException(
-            status_code=status.HTTP_424_FAILED_DEPENDENCY, detail={"Reaction not added"}
-        )
-    raise HTTPException(
-        status_code=status.HTTP_409_CONFLICT,
-        detail={"Reaction already exists"}
-    )
-
-
+            return JSONResponse(
+                content=ResponseModel.success(
+                data=data, message="reaction added successfully"
+                 ),
+                status_code=status.HTTP_200_OK,
+                )
+        raise HTTPException(        
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail="Failure to add reaction",
+            )
+            
+                    
+                
