@@ -47,7 +47,8 @@ class Emoji(BaseModel):
     """
 
     name: str
-    count: Optional[int]# = None
+    # count: Optional[int]# = None
+    count: int
     emoji: str
     reactedUsersId: List[str] = []
     # reactedUsersId: List[ObjId] = []
