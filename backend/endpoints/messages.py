@@ -483,10 +483,11 @@ async def reactions(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
             detail="Failed to retrieve room members",
         )
-    memberIds = list(members) # convert romm members to list
+    # memberIds = list(members) # convert romm members to list
     
     new_reaction = request.dict()
-    if new_reaction["reactedUsersId"][0] not in memberIds: # check if user is a room member
+    if new_reaction["reactedUsersId"][0] not in list(members): # check if user is in list of room members
+    # if new_reaction["reactedUsersId"][0] not in memberIds: # check if user is a room member
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid room member",
