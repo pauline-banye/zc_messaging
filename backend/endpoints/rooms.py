@@ -44,13 +44,29 @@ async def create_room(
     DB = DataStorage(org_id)
     room_obj = Room(**request.dict(), org_id=org_id, created_by=member_id)
 
-    # check if creator is in room members
+    #check if creator is in room members
     if member_id not in room_obj.room_members.keys():
         room_obj.room_members[member_id] = {
             "role": Role.ADMIN,
             "starred": False,
             "closed": False,
         }
+
+    # if member_id not in room_obj.room_members.keys():
+    #     raise HTTPException(
+    #         status_code=status.HTTP_400_BAD_REQUEST,
+    #         detail="member_id is not in room_members",
+    #     )
+
+    # if (
+    #     room_obj.room_type.casefold() == "channel"
+        
+    #     and room_obj.room_members[member_id]["role"] != Role.ADMIN
+    #     ):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_400_BAD_REQUEST,
+    #         detail="member_id is not an admin",
+    #     )              
 
     response = await DB.write(ROOM_COLLECTION, data=room_obj.dict())
     if response and response.get("status_code", None) is None:

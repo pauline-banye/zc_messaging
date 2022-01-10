@@ -271,7 +271,7 @@ async def get_messages(org_id, room_id):
         404: {"detail": "Message not found"},
     },
 )
-async def get_message_by_id(
+async def get_message_detail(
     org_id: str,
     room_id: str,
     message_id: str,
