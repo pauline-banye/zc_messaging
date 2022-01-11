@@ -76,6 +76,62 @@ def fixture_mock_update_message(mocker):
 @pytest.fixture(name="mock_get_org_members")
 def fixture_mock_get_org_members(mocker):
     """Patch for reading zc core.
+    Args:
+       mocker (Mock): For patching a third-party api call
+    Returns:
+       AsyncMock: An instance of the asyncmock class
+    """
+    zc_core_read_data = AsyncMock()
+    mocker.patch("endpoints.rooms.DataStorage.read", side_effect=zc_core_read_data)
+    return zc_core_read_data
+
+
+# @pytest.fixture(name="mock_get_admin_members")
+# def fixture_mock_get_admin_members(mocker):
+#     """Patch for reading zc core.
+#     Args:
+#        mocker (Mock): For patching a third-party api call
+#     Returns:
+#        AsyncMock: An instance of the asyncmock class
+#     """
+#     zc_core_read_data = AsyncMock()
+#     mocker.patch("endpoints.rooms.DataStorage.read", side_effect=zc_core_read_data)
+#     return zc_core_read_data
+
+
+@pytest.fixture(name="mock_get_org_rooms")
+def fixture_mock_get_org_rooms(mocker):
+    """Patch for reading zc core.
+
+    Args:
+       mocker (Mock): For patching a third-party api call
+
+    Returns:
+       AsyncMock: An instance of the asyncmock class
+    """
+    zc_core_read_data = AsyncMock()
+    mocker.patch("endpoints.rooms.DataStorage.read", side_effect=zc_core_read_data)
+    return zc_core_read_data
+
+
+@pytest.fixture(name="mock_get_all_members")
+def fixture_mock_get_all_members(mocker):
+    """Patch for reading zc core.
+
+    Args:
+       mocker (Mock): For patching a third-party api call
+
+    Returns:
+       AsyncMock: An instance of the asyncmock class
+    """
+    zc_core_read_data = AsyncMock()
+    mocker.patch("endpoints.rooms.DataStorage.get_all_members", side_effect=zc_core_read_data)
+    return zc_core_read_data
+
+
+@pytest.fixture(name="mock_get_org_members")
+def fixture_mock_get_org_members(mocker):
+    """Patch for reading zc core.
 
     Args:
        mocker (Mock): For patching a third-party api call

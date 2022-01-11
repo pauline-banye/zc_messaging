@@ -1,4 +1,5 @@
 from utils.db import DataStorage
+from typing import Optional
 
 ROOM_COLLECTION = "rooms"
 DEFAULT_DM_IMG = (
@@ -72,13 +73,12 @@ async def get_room_members(org_id: str, room_id: str) -> dict:
         [Dict]: key value
     """
     DB = DataStorage(org_id)
-    query = {"_id": room_id}
+    query = {"_id": room_id}        
     options = {"sort": {"created_at": -1}, "projection": {"room_members": 1, "_id": 0}}
     response = await DB.read(ROOM_COLLECTION, query=query, options=options)
     if response and "status_code" not in response:
         return response.get("room_members", {})
     return {}    
-    # return response or []
 
 
 
@@ -120,3 +120,35 @@ async def is_user_starred_room(org_id: str, room_id: str, member_id: str) -> boo
     if response and "status_code" not in response:
         return response["room_members"][member_id]["starred"]
     raise Exception("Room not found")
+
+
+
+# for key, value in members.items():
+#         if key.startswith(keyword):
+#             members.update({key: value})
+#     return JSONResponse(
+#         content=ResponseModel.success(
+#             data=members,
+#             message="Room members retrieved"
+#         ),
+#         status_code=status.HTTP_200_OK,
+#     )
+    
+    # for key, value in members.items():
+    #     if keyword:
+    #         if key.startswith(keyword):
+    #             members.update({key: value})
+    #         else:
+    #             members.pop(key)
+    #     else:
+    #         members.update({key: value})
+    
+    # return JSONResponse(
+    #     content=ResponseModel.success(
+    #         data=members,
+    #         message="Room members retrieved"
+    #     ),
+    #     status_code=status.HTTP_200_OK,
+    # )
+
+
