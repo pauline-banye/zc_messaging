@@ -382,54 +382,6 @@ async def get_room_by_id(org_id: str, room_id: str):
 
 
 
-# @router.get(
-#     "/org/{org_id}/rooms/{room_id}/users",
-#     response_model=ResponseModel,
-#     status_code=status.HTTP_200_OK,
-#     responses={
-#         404: {"detail": "Failure to retrieve room members"},
-#     },
-# )
-# async def get_room_users(org_id: str, room_id: str):
-#     """
-#     Get room members.
-
-#     Returns the list of room members if the room is found in the database
-#     Raises HTTP_404_NOT_FOUND if the room is not found
-
-#     Args:
-#         org_id (str): A unique identifier of an organisation
-#         room_id (str): A unique identifier of the room
-
-#     Returns:
-#         HTTP_200_OK (list of room members)
-#         {
-#             "619ba4671a5f54782939d385": {
-#                 "closed": false,
-#                 "role": "admin",
-#                 "starred": false
-#             }
-#         }
-
-#     Raises:
-#         HTTPException [404]: Room not found
-#         HTTPException [424]: Failure to retrieve data
-#     """
-#     members = await get_room_members(org_id, room_id) 
-#     if members and members.get("status_code") is None:
-#         return JSONResponse(
-#             content=ResponseModel.success(
-#             data=members,
-#             message="list of room members"
-#             ),
-#             status_code=status.HTTP_200_OK,
-#         )
-#     raise HTTPException(
-#         status_code=status.HTTP_404_NOT_FOUND,
-#         detail="Failure to retrieve room members",
-#     )
-    
-
 
 # @router.get(
 #     "/org/{org_id}/rooms/{room_id}/members",
@@ -506,7 +458,6 @@ async def get_room_by_id(org_id: str, room_id: str):
     
    
 
-
 @router.get(
     "/org/{org_id}/rooms/{room_id}/members",
     response_model=ResponseModel,
@@ -529,7 +480,7 @@ async def get_members(org_id: str, room_id: str, keyword: Optional[str] = None):
         org_id (str): A unique identifier of an organisation
         room_id (str): A unique identifier of the room
     Returns:
-        HTTP_200_OK (Room members retrieved)
+        HTTP_200_OK (Room members retrieved successfully):
 
         {
             "status": "success",
@@ -553,49 +504,48 @@ async def get_members(org_id: str, room_id: str, keyword: Optional[str] = None):
         HTTPException [404]: Room not found
         HTTPException [424]: Failure to retrieve room members
     """
-    members = await get_room_members(org_id, room_id)
+    room = await get_room(org_id, room_id)
 
-    if not members:
+    if not room:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Room not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Room doesn't exist"
         )
-        
-    if members.get("status_code") is not None:
+
+    members = room["room_members"]
+    if members and members.get("status_code") is not None:
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
             detail="Failure to retrieve room members",
-        )    
-    
-    if keyword:
+        )
+
+    if keyword:  # if keyword is supplied
         if keyword not in ["admin", "member"]:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid keyword supplied",
             )
-            
+
         filtered_members = {
             member_id: member_data
             for member_id, member_data in members.items()
             if member_data["role"] == keyword
         }
         return JSONResponse(
-            content=ResponseModel.success(
-                data=filtered_members, message="Room members retrieved"
-            ),
             status_code=status.HTTP_200_OK,
+            content=ResponseModel.success(
+                data=filtered_members, message="Room members retrieved successfully"
+            ),
         )
+
+    # if keyword is not supplied
     return JSONResponse(
+        status_code=status.HTTP_200_OK,
         content=ResponseModel.success(
             data=members,
-            message="Room members retrieved",
+            message="Room members retrieved successfully",
         ),
-        status_code=status.HTTP_200_OK,
     )
-    
-    
-
-
-
+   
 
 # @router.get(
 #     "/org/{org_id}/rooms/{room_id}/memberslist",
@@ -644,77 +594,3 @@ async def get_members(org_id: str, room_id: str, keyword: Optional[str] = None):
 #         detail="Failed to retrieve room members",
 #     )
 
-
-# @router.get(
-#     "/org/{org_id}/rooms/{room_id}/members",
-#     response_model=ResponseModel,
-#     status_code=status.HTTP_200_OK,
-#     responses={
-#         424: {"detail": "Failure to retrieve room members"},
-#     },
-# )
-# async def get_members(org_id: str, room_id: str):
-#     """
-#     Get room members.
-#     Returns all members in a room if the room is found in the database
-#     Raises HTTP_424_FAILED_DEPENDENCY if there is an error retrieving the room members
-#     Args:
-#         org_id (str): A unique identifier of an organisation
-#         room_id (str): A unique identifier of the room
-#     Returns:
-#         HTTP_200_OK (Room members)
-
-#         {
-#             "status": "success",
-#             "message": "Room Members",
-#             "data": {
-#                 "61696f5ac4133ddaa309dcfe": {
-#                 "closed": false,
-#                 "role": "admin",
-#                 "starred": false
-#                 },
-#                 "6169704bc4133ddaa309dd07": {
-#                 "closed": false,
-#                 "role": "admin",
-#                 "starred": false
-#                 }
-#             }
-#         }
-
-#     Raises:
-#         HTTPException [424]: Failed to retrieve room members
-#     """
-#     members = await get_room_members(org_id, room_id)
-    
-#     if members and members.get("status_code") is None:
-#         return JSONResponse(
-#             content=ResponseModel.success(data=members, message="Room Members"),
-#             status_code=status.HTTP_200_OK,
-#         )
-        
-#     raise HTTPException(
-#         status_code=status.HTTP_424_FAILED_DEPENDENCY,
-#         detail="Failed to retrieve room members",
-#     )
-
-
-# @router.delete(
-#     "/org/{org_id}/rooms/{room_id}",
-#     response_model=ResponseModel,
-#     status_code=status.HTTP_200_OK,
-#     responses={
-#         404: {"detail": "Room not found"},
-#         424: {"detail": "Failure to delete room"},
-#     },
-# )
-# async def delete_room(org_id: str, room_id: str):
-#     room = await get_room(org_id, room_id)
-#     if not room:
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND,
-#             detail="Room not found",
-#         )
-    
-        
-        
-        
