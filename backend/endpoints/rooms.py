@@ -1,14 +1,16 @@
-from typing import Dict
+import json
+from typing import Dict, Optional
 
-from fastapi import APIRouter, BackgroundTasks, Body, HTTPException, status, Query, Request
+from fastapi import (APIRouter, BackgroundTasks, Body, HTTPException, Query,
+                     Request, status)
 from fastapi.responses import JSONResponse
 from schema.response import ResponseModel
 from schema.room import Role, Room, RoomMember, RoomRequest, RoomType
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
-from utils.room_utils import ROOM_COLLECTION, get_room, get_org_rooms, get_room_members
+from utils.room_utils import (ROOM_COLLECTION, get_org_rooms, get_room,
+                              get_room_members, remove_room_member)
 from utils.sidebar import sidebar
-from typing import Optional
 
 router = APIRouter()
 
@@ -45,7 +47,7 @@ async def create_room(
     DB = DataStorage(org_id)
     room_obj = Room(**request.dict(), org_id=org_id, created_by=member_id)
 
-    #check if creator is in room members
+    # check if creator is in room members
     if member_id not in room_obj.room_members.keys():
         room_obj.room_members[member_id] = {
             "role": Role.ADMIN,
@@ -74,6 +76,96 @@ async def create_room(
         status_code=status.HTTP_424_FAILED_DEPENDENCY,
         detail="unable to create room",
     )
+
+
+@router.patch(
+    "/org/{org_id}/rooms/{room_id}/members/{member_id}",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    responses={
+        404: {"detail": "room or member not found"},
+        424: {"detail": "member removal unsuccessful"},
+    },
+)
+async def remove_member(
+    org_id: str, room_id: str, member_id: str, admin_id: Optional[str] = None
+):
+    """Removes a member from a room either when removed by an admin or member leaves the room.
+
+    Fetches the room which the member is removed from from the database collection
+    Pops the member being removed from the room's members dict
+    Updates the database collection with the new room
+    Returns the room dict if member was removed successfully
+
+    Args:
+        org_id (str): A unique identifier of an organisation
+        member_id (str): A unique identifier of the member being removed from the room
+        room_id (str): A unique identifier of the room a member is being removed from
+        admin_id (str): A unique identifier of the member removing another member
+
+    Returns:
+        HTTP_200_OK (member removed from room): {room}
+    Raises
+        HTTP_404_NOT_FOUND: room or member not found
+        HTTP_403_FORBIDDEN: not authorized to remove room  member
+        HTTP_424_FAILED_DEPENDENCY: member removal unsuccessful
+    """
+    room_data = await get_room(org_id, room_id)
+    if not room_data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="room does not exist",
+        )
+    if room_data["room_type"] != RoomType.CHANNEL:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="cannot remove member from DM rooms",
+        )
+
+    if member_id not in room_data["room_members"]:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="user not a member of the room",
+        )
+
+    if admin_id not in room_data["room_members"]:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="admin id specified not a member of the room",
+        )
+
+    admin_data = room_data["room_members"].get(
+        admin_id
+    )  # member will be none if no admin is supplied
+
+    if admin_data is not None and admin_data.get("role") != Role.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="must be an admin to remove member",
+        )
+
+    try:
+        result = await remove_room_member(
+            org_id=org_id, room_data=room_data, member_id=member_id
+        )
+
+    except ValueError as value_error:
+        raise HTTPException(
+            detail=value_error, status_code=status.HTTP_404_NOT_FOUND
+        ) from value_error
+
+    except ConnectionError as connect_error:
+        raise HTTPException(
+            detail=json.dumps(str(connect_error)),
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+        ) from connect_error
+    else:
+        return JSONResponse(
+            content=ResponseModel.success(
+                data=result, message="user removed from room successfully"
+            ),
+            status_code=status.HTTP_200_OK,
+        )
 
 
 @router.put(
@@ -341,7 +433,7 @@ async def get_room_by_id(org_id: str, room_id: str):
 
     Returns:
         HTTP_200_OK (room found)
-        
+
         {
             "_id": "61bc094b78fb01b18fac1425",
             "created_at": "2021-12-17 03:10:26.620752",
@@ -367,19 +459,13 @@ async def get_room_by_id(org_id: str, room_id: str):
         HTTPException [404]: Room not found
         HTTPException [424]: Failure to retrieve data
     """
-    room = await get_room(org_id, room_id)   
+    room = await get_room(org_id, room_id)
     if room:
         return JSONResponse(
-            content=ResponseModel.success(
-                data=room, message="room found"
-            ),
+            content=ResponseModel.success(data=room, message="room found"),
             status_code=status.HTTP_200_OK,
         )
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND, 
-        detail="room not found"
-    )
-
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="room not found")
 
 
 @router.get(
@@ -524,12 +610,6 @@ async def get_members(org_id: str, room_id: str, query: Optional[str] = None):
     )
 
 
-
-
-
-
-
-
 # @router.get(
 #     "/org/{org_id}/rooms/{room_id}/members",
 #     response_model=ResponseModel,
@@ -619,10 +699,6 @@ async def get_members(org_id: str, room_id: str, query: Optional[str] = None):
 #     )
 
 
-
-
-
-
 # @router.get(
 #     "/org/{org_id}/rooms/{room_id}/memberslist",
 #     response_model=ResponseModel,
@@ -664,9 +740,8 @@ async def get_members(org_id: str, room_id: str, query: Optional[str] = None):
 #             content=ResponseModel.success(data=members, message="Room Members"),
 #             status_code=status.HTTP_200_OK,
 #         )
-        
+
 #     raise HTTPException(
 #         status_code=status.HTTP_424_FAILED_DEPENDENCY,
 #         detail="Failed to retrieve room members",
 #     )
-

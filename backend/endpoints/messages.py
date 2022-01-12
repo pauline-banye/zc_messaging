@@ -1,18 +1,18 @@
-from fastapi import APIRouter, BackgroundTasks, HTTPException, status, Body
-from schema.message import Message, MessageRequest, Emoji, Thread
-from schema.response import ResponseModel
-from schema.custom import ObjId
-from starlette.responses import JSONResponse
 from typing import Dict, List
+
+from fastapi import APIRouter, BackgroundTasks, Body, HTTPException, status
+from fastapi_pagination import Page, add_pagination, paginate
+from schema.custom import ObjId
+from schema.message import Emoji, Message, MessageRequest, Thread
+from schema.response import ResponseModel
+from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
 from utils.message_utils import (MESSAGE_COLLECTION, get_message,
                                  get_room_messages)
-from utils.room_utils import get_room_members, get_room
-from schema.custom import ObjId
+from utils.room_utils import get_room, get_room_members
 
 router = APIRouter()
-
 
 
 @router.post(
@@ -131,7 +131,7 @@ async def update_message(
         room_id: A unique identifier of the room.
         message_id: A unique identifier of the message that is being edited.
         background_tasks: A daemon thread for publishing to centrifugo
-        
+
         {
         "emojis": [],
         "richUiData": {
@@ -150,8 +150,8 @@ async def update_message(
                 },
         "sender_id": "619ba4671a5f54782939d385",
         "timestamp": 0
-        }      
-        
+        }
+
     Returns:
         HTTP_200_OK {Message edited}:
         A dict containing data about the message that was edited.
@@ -212,10 +212,10 @@ async def update_message(
             detail="You are not authorized to edit this message",
         )
 
-    message["richUiData"] = payload["richUiData"]
-    payload["edited"] = True
+    message.update(payload)
+    message["edited"] = True
     edited_message = await DB.update(
-        MESSAGE_COLLECTION, document_id=message_id, data=payload
+        MESSAGE_COLLECTION, document_id=message_id, data=message
     )
 
     if edited_message and edited_message.get("status_code") is None:
@@ -235,7 +235,7 @@ async def update_message(
 
 @router.get(
     "/org/{org_id}/rooms/{room_id}/messages",
-    response_model=ResponseModel,
+    response_model=Page[Message],
     status_code=status.HTTP_200_OK,
     responses={424: {"detail": "ZC Core failed"}},
 )
@@ -258,10 +258,14 @@ async def get_messages(org_id, room_id):
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
             detail="Zc Core failed",
         )
-    return JSONResponse(
-        content=ResponseModel.success(data=response, message="Messages retrieved"),
-        status_code=status.HTTP_200_OK,
-    )
+    # return JSONResponse(
+    #     content=ResponseModel.success(data=response, message="Messages retrieved"),
+    #     status_code=status.HTTP_200_OK,
+    # )
+    return paginate(response)
+
+
+add_pagination(router)
 
 
 @router.get(
@@ -285,7 +289,7 @@ async def get_message_detail(
     Returns:
         HTTP_200_OK {Message retrieved}:
         A dict containing data about the message in the room based on the message schema.
-        
+
         {
             "_id": "61cb65f378fb01b18fac147b",
             "created_at": "2021-12-22 22:38:33.075643",
@@ -322,7 +326,7 @@ async def get_message_detail(
             "text": "string",
             "threads": []
         }
-        
+
     Raises:
         HTTPException [404]: Message not found
     """
@@ -349,9 +353,9 @@ async def get_message_detail(
     },
 )
 async def delete_message(
-    org_id: str, 
-    room_id: str, 
-    message_id: str, 
+    org_id: str,
+    room_id: str,
+    message_id: str,
     sender_id: str,
     background_tasks: BackgroundTasks,
 ):
@@ -362,7 +366,7 @@ async def delete_message(
         message_id: A unique identifier of the message to be retrieved
         sender_id: A unique identifier of the user who is deleting the message
     Returns:
-        HTTP_200_OK {Message deleted}:        
+        HTTP_200_OK {Message deleted}:
     Raises:
         HTTPException [401]: You are not authorized to delete this message,
         HTTPException [404]: Message not found,
@@ -374,19 +378,19 @@ async def delete_message(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Message not found",
-        ) # check if message exists
-        
+        )  # check if message exists
+
     if message.get("sender_id") != sender_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="You are not authorized to delete this message",
-        ) # check if person deleting is the sender of the message
-    
+        )  # check if person deleting is the sender of the message
+
     remove_message = await DB.delete(
         MESSAGE_COLLECTION,
         document_id=message_id,
     )
-    
+
     if remove_message and remove_message.get("status_code") is None:
         # publish to centrifugo in the background
         background_tasks.add_task(
@@ -397,19 +401,14 @@ async def delete_message(
         )
         return JSONResponse(
             content=ResponseModel.success(
-                data=remove_message, 
-                message="message deleted"
-                ),
+                data=remove_message, message="message deleted"
+            ),
             status_code=status.HTTP_200_OK,
         )
     raise HTTPException(
         status_code=status.HTTP_424_FAILED_DEPENDENCY,
         detail="Failure to delete message",
     )
-                        
-
-
-
 
 
 @router.put(
@@ -419,7 +418,9 @@ async def delete_message(
     responses={
         401: {"description": "Invalid room member"},
         404: {"description": "Message not found"},
-        424: {"description": "Failed to retrieve room members / Failed to add reaction or remove reaction"},
+        424: {
+            "description": "Failed to retrieve room members / Failed to add reaction or remove reaction"
+        },
     },
 )
 async def reactions(
@@ -428,7 +429,7 @@ async def reactions(
     room_id: str,
     message_id: str,
     background_tasks: BackgroundTasks,
-): 
+):
     """
     Checks if there are any reactions for the message.
     Adds a reaction to a message.
@@ -465,37 +466,39 @@ async def reactions(
         HTTPException [401]: Invalid room member
         HTTPException [404]: Message not found
         HTTPException [424]: Failed to retrieve room members
-        HTTPException [424]: Failed to add reaction 
+        HTTPException [424]: Failed to add reaction
         HTTPException [424]: Failed to remove reaction
     """
     DB = DataStorage(org_id)
-    
-    message = await get_message(org_id, room_id, message_id) # get message
+
+    message = await get_message(org_id, room_id, message_id)  # get message
     if not message:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Message not found",
-        ) 
+        )
     reactions = message.get("emojis")
-    
-    members = await get_room_members(org_id, room_id) # retrieve room members
+
+    members = await get_room_members(org_id, room_id)  # retrieve room members
     if not members:
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
             detail="Failed to retrieve room members",
         )
     # memberIds = list(members) # convert romm members to list
-    
+
     new_reaction = request.dict()
-    if new_reaction["reactedUsersId"][0] not in list(members): # check if user is in list of room members
-    # if new_reaction["reactedUsersId"][0] not in memberIds: # check if user is a room member
+    if new_reaction["reactedUsersId"][0] not in list(
+        members
+    ):  # check if user is in list of room members
+        # if new_reaction["reactedUsersId"][0] not in memberIds: # check if user is a room member
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid room member",
         )
-    
+
     # if no reactions exist for the message
-    if not reactions: 
+    if not reactions:
         reactions = [new_reaction]
         updated_emoji = await DB.update(
             MESSAGE_COLLECTION, document_id=message_id, data={"emojis": reactions}
@@ -503,32 +506,30 @@ async def reactions(
         if updated_emoji and updated_emoji.get("status_code") is not None:
             raise HTTPException(
                 status_code=status.HTTP_424_FAILED_DEPENDENCY,
-                detail="Failed to add reaction"
+                detail="Failed to add reaction",
             )
         # publish to centrifugo in the background
         background_tasks.add_task(
-            centrifugo_client.publish,
-            room_id, Events.MESSAGE_UPDATE, new_reaction
+            centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, new_reaction
         )
         return JSONResponse(
-            content=ResponseModel.success(
-                data=new_reaction, message="reaction added"
-            ),
+            content=ResponseModel.success(data=new_reaction, message="reaction added"),
             status_code=status.HTTP_200_OK,
         )
-    
-    # if reactions exist for the message             
-    for emoji in reactions: 
-        if emoji["name"] == new_reaction["name"]: # if emoji is already in reactions
-            
+
+    # if reactions exist for the message
+    for emoji in reactions:
+        if emoji["name"] == new_reaction["name"]:  # if emoji is already in reactions
+
             # if user hasn't reacted with the emoji
-            if new_reaction["reactedUsersId"][0] not in emoji["reactedUsersId"]: 
+            if new_reaction["reactedUsersId"][0] not in emoji["reactedUsersId"]:
                 emoji["reactedUsersId"].append(new_reaction["reactedUsersId"][0])
                 emoji["count"] += 1
-                
+
                 added = await DB.update(
-                    MESSAGE_COLLECTION, document_id=message_id, 
-                    data={"emojis": reactions}
+                    MESSAGE_COLLECTION,
+                    document_id=message_id,
+                    data={"emojis": reactions},
                 )
                 if added and added.get("status_code") is not None:
                     raise HTTPException(
@@ -537,34 +538,31 @@ async def reactions(
                     )
                 # publish to centrifugo in the background
                 background_tasks.add_task(
-                    centrifugo_client.publish, room_id,
-                    Events.MESSAGE_UPDATE, emoji
+                    centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, emoji
                 )
                 return JSONResponse(
-                    content=ResponseModel.success(
-                        data=emoji, message="reaction added"
-                    ),
+                    content=ResponseModel.success(data=emoji, message="reaction added"),
                     status_code=status.HTTP_200_OK,
                 )
-            
-            # if user has reacted with the emoji    
-            emoji["reactedUsersId"].remove(new_reaction["reactedUsersId"][0]) 
+
+            # if user has reacted with the emoji
+            emoji["reactedUsersId"].remove(new_reaction["reactedUsersId"][0])
             emoji["count"] -= 1
-            
-            if emoji["count"] != 0: # if emoji count is not 0
+
+            if emoji["count"] != 0:  # if emoji count is not 0
                 updated = await DB.update(
-                    MESSAGE_COLLECTION, document_id=message_id, 
-                    data={"emojis": reactions}
+                    MESSAGE_COLLECTION,
+                    document_id=message_id,
+                    data={"emojis": reactions},
                 )
                 if updated and updated.get("status_code") is not None:
                     raise HTTPException(
                         status_code=status.HTTP_424_FAILED_DEPENDENCY,
                         detail="Failed to remove user's reaction",
-                    )    
+                    )
                 # publish to centrifugo in the background
                 background_tasks.add_task(
-                    centrifugo_client.publish, room_id,
-                    Events.MESSAGE_UPDATE, emoji
+                    centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, emoji
                 )
                 return JSONResponse(
                     content=ResponseModel.success(
@@ -573,49 +571,39 @@ async def reactions(
                     status_code=status.HTTP_200_OK,
                 )
 
-            reactions.remove(emoji) # if emoji count is 0
+            reactions.remove(emoji)  # if emoji count is 0
             removed = await DB.update(
-                MESSAGE_COLLECTION, 
-                document_id=message_id, 
-                data={"emojis": reactions}
+                MESSAGE_COLLECTION, document_id=message_id, data={"emojis": reactions}
             )
             if removed and removed.get("status_code") is not None:
                 raise HTTPException(
                     status_code=status.HTTP_424_FAILED_DEPENDENCY,
                     detail="Failed to remove reaction",
-                )   
+                )
             # publish to centrifugo in the background
             background_tasks.add_task(
-                centrifugo_client.publish, room_id,
-                Events.MESSAGE_UPDATE, removed
+                centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, removed
             )
             return JSONResponse(
-                content=ResponseModel.success(
-                    data=emoji, message="reaction removed"
-                ),
+                content=ResponseModel.success(data=emoji, message="reaction removed"),
                 status_code=status.HTTP_200_OK,
             )
-            
+
     # if emoji is not in reactions
-    reactions.append(new_reaction) 
+    reactions.append(new_reaction)
     new = await DB.update(
         MESSAGE_COLLECTION, document_id=message_id, data={"emojis": reactions}
     )
     if new and new.get("status_code") is not None:
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
-            detail="Failed to add reaction"
+            detail="Failed to add reaction",
         )
     # publish to centrifugo in the background
     background_tasks.add_task(
-        centrifugo_client.publish, room_id,
-        Events.MESSAGE_UPDATE, new_reaction
+        centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, new_reaction
     )
     return JSONResponse(
-        content=ResponseModel.success(
-            data=new_reaction, message="reaction added"
-        ),
+        content=ResponseModel.success(data=new_reaction, message="reaction added"),
         status_code=status.HTTP_200_OK,
     )
-    
-                       
