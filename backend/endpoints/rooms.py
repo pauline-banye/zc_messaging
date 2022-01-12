@@ -387,17 +387,17 @@ async def get_room_by_id(org_id: str, room_id: str):
     response_model=ResponseModel,
     status_code=status.HTTP_200_OK,
     responses={
-        400: {"detail": "Invalid keyword supplied"},
+        400: {"detail": "Invalid query supplied"},
         404: {"detail": "Room not found"},
         424: {"detail": "Failure to retrieve room members"},
     },
 )
-async def get_members(org_id: str, room_id: str, keyword: Optional[str] = None):
+async def get_members(org_id: str, room_id: str, query: Optional[str] = None):
 
     """Get room members.
     Returns all members in a room if the room is found in the database
-    Returns filtered members in a room if keyword is supplied
-    Raises HTTP_400_BAD_REQUEST if keyword supplied is not admin or member
+    Returns filtered members in a room if query is supplied
+    Raises HTTP_400_BAD_REQUEST if query supplied is not admin or member
     Raises HTTP_404_NOT_FOUND if the room is not found
     Raises HTTP_424_FAILED_DEPENDENCY if there is an error retrieving the room members
     Args:
@@ -424,7 +424,7 @@ async def get_members(org_id: str, room_id: str, keyword: Optional[str] = None):
         }
 
     Raises:
-        HTTPException [400]: Invalid keyword supplied
+        HTTPException [400]: Invalid query supplied
         HTTPException [404]: Room not found
         HTTPException [424]: Failure to retrieve room members
     """
@@ -442,20 +442,20 @@ async def get_members(org_id: str, room_id: str, keyword: Optional[str] = None):
             detail="Failure to retrieve room members",
         )
 
-    if keyword:  # if keyword is supplied
-        if keyword not in ["admin", "member", "starred", "closed"]:
+    if query:  # if query is supplied
+        if query not in ["admin", "member", "starred", "closed"]:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid keyword supplied",
+                detail="Invalid query supplied",
             )
-            
-        if keyword in ["admin", "member"]: # if keyword is admin or member
+
+        if query in ["admin", "member"]:  # if query is admin or member
             members_role = {
                 member_id: member_data
                 for member_id, member_data in members.items()
-                if member_data["role"] == keyword
+                if member_data["role"] == query
             }
-            if keyword == "admin":
+            if query == "admin":
                 return JSONResponse(
                     status_code=status.HTTP_200_OK,
                     content=ResponseModel.success(
@@ -469,48 +469,52 @@ async def get_members(org_id: str, room_id: str, keyword: Optional[str] = None):
                     data=members_role, message="Room members retrieved successfully"
                 ),
             )
-            
-        if keyword == "starred": # if keyword is starred
+
+        if query == "starred":  # if query is starred
             members_starred = {
                 member_id: member_data
                 for member_id, member_data in members.items()
-                if member_data["starred"] == True
+                if member_data["starred"] is True
             }
             if members_starred == {}:
                 return JSONResponse(
                     status_code=status.HTTP_200_OK,
                     content=ResponseModel.success(
-                        data=members_starred, message="No room member has starred this room"
-                    ),
-                )                
-            return JSONResponse(
-                status_code=status.HTTP_200_OK,
-                content=ResponseModel.success(
-                    data=members_starred, message="Starred room members retrieved successfully"
-                ),
-            )
-            
-        if keyword == "closed": # if keyword is closed
-            members_closed = {
-                member_id: member_data
-                for member_id, member_data in members.items()
-                if member_data["closed"] == True
-            }
-            if members_closed == {}:
-                return JSONResponse(
-                    status_code=status.HTTP_200_OK,
-                    content=ResponseModel.success(
-                        data=members_closed, message="No room member has closed this room"
+                        data=members_starred,
+                        message="No room member has starred this room",
                     ),
                 )
             return JSONResponse(
                 status_code=status.HTTP_200_OK,
                 content=ResponseModel.success(
-                    data=members_closed, message="Closed room members retrieved successfully"
+                    data=members_starred,
+                    message="Starred room members retrieved successfully",
                 ),
             )
 
-    # if keyword is not supplied
+        if query == "closed":  # if query is closed
+            members_closed = {
+                member_id: member_data
+                for member_id, member_data in members.items()
+                if member_data["closed"] is True
+            }
+            if members_closed == {}:
+                return JSONResponse(
+                    status_code=status.HTTP_200_OK,
+                    content=ResponseModel.success(
+                        data=members_closed,
+                        message="No room member has closed this room",
+                    ),
+                )
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content=ResponseModel.success(
+                    data=members_closed,
+                    message="Closed room members retrieved successfully",
+                ),
+            )
+
+    # if query is not supplied
     return JSONResponse(
         status_code=status.HTTP_200_OK,
         content=ResponseModel.success(
@@ -518,14 +522,6 @@ async def get_members(org_id: str, room_id: str, keyword: Optional[str] = None):
             message="All room members retrieved successfully",
         ),
     )
-
-
-
-
-
-
-
-
 
 
 
