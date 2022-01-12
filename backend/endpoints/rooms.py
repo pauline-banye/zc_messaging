@@ -382,82 +382,6 @@ async def get_room_by_id(org_id: str, room_id: str):
 
 
 
-
-# @router.get(
-#     "/org/{org_id}/rooms/{room_id}/members",
-#     response_model=ResponseModel,
-#     status_code=status.HTTP_200_OK,
-#     responses={
-#         404: {"detail": "Room not found"},
-#         424: {"detail": "Failure to retrieve room members"},
-#     },
-# )
-# async def get_members(org_id: str, room_id: str, keyword: Optional[str] = None) -> dict:
-    
-#     """Get room members.
-#     Returns all members in a room if the room is found in the database
-#     Raise s HTTP_404_NOT_FOUND if the room is not found
-#     Raises HTTP_424_FAILED_DEPENDENCY if there is an error retrieving the room members
-#     Args:
-#         org_id (str): A unique identifier of an organisation
-#         room_id (str): A unique identifier of the room
-#     Returns:
-#         HTTP_200_OK (Room members retrieved)
-        
-#         {
-#             "status": "success",
-#             "message": "Room members retrieved",
-#             "data": {
-#                 "61696f5ac4133ddaa309dcfe": {
-#                 "closed": false,
-#                 "role": "admin",
-#                 "starred": false
-#                 },
-#                 "6169704bc4133ddaa309dd07": {
-#                 "closed": false,
-#                 "role": "admin",
-#                 "starred": false
-#                 }
-#             }
-#         }
-        
-#     Raises:
-#         HTTPException [404]: Room not found
-#         HTTPException [424]: Failure to retrieve room members
-#     """
-#     members = await get_room_members(org_id, room_id)
-    
-#     if not members:
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND, 
-#             detail="Room not found"
-#         )
-#     if members.get("status_code") is not None:
-#         raise HTTPException(
-#             status_code=status.HTTP_424_FAILED_DEPENDENCY,
-#             detail="Failure to retrieve room members",
-#         )
-#     if keyword: 
-#         newset = {
-#             key: value for key, value in members.items() if value.get("role") == keyword
-#             }
-#         return JSONResponse(
-#             content=ResponseModel.success(
-#                 data=newset,
-#                 message="Room members retrieved"
-#             ),
-#             status_code=status.HTTP_200_OK,
-#         )
-#     return JSONResponse(
-#         content=ResponseModel.success(
-#             data=members,
-#             message="Room members retrieved"
-#         ),
-#         status_code=status.HTTP_200_OK,
-#     )   
-    
-   
-
 @router.get(
     "/org/{org_id}/rooms/{room_id}/members",
     response_model=ResponseModel,
@@ -519,33 +443,189 @@ async def get_members(org_id: str, room_id: str, keyword: Optional[str] = None):
         )
 
     if keyword:  # if keyword is supplied
-        if keyword not in ["admin", "member"]:
+        if keyword not in ["admin", "member", "starred", "closed"]:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid keyword supplied",
             )
-
-        filtered_members = {
-            member_id: member_data
-            for member_id, member_data in members.items()
-            if member_data["role"] == keyword
-        }
-        return JSONResponse(
-            status_code=status.HTTP_200_OK,
-            content=ResponseModel.success(
-                data=filtered_members, message="Room members retrieved successfully"
-            ),
-        )
+            
+        if keyword in ["admin", "member"]: # if keyword is admin or member
+            members_role = {
+                member_id: member_data
+                for member_id, member_data in members.items()
+                if member_data["role"] == keyword
+            }
+            if keyword == "admin":
+                return JSONResponse(
+                    status_code=status.HTTP_200_OK,
+                    content=ResponseModel.success(
+                        data=members_role,
+                        message="Admin members retrieved successfully",
+                    ),
+                )
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content=ResponseModel.success(
+                    data=members_role, message="Room members retrieved successfully"
+                ),
+            )
+            
+        if keyword == "starred": # if keyword is starred
+            members_starred = {
+                member_id: member_data
+                for member_id, member_data in members.items()
+                if member_data["starred"] == True
+            }
+            if members_starred == {}:
+                return JSONResponse(
+                    status_code=status.HTTP_200_OK,
+                    content=ResponseModel.success(
+                        data=members_starred, message="No room member has starred this room"
+                    ),
+                )                
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content=ResponseModel.success(
+                    data=members_starred, message="Starred room members retrieved successfully"
+                ),
+            )
+            
+        if keyword == "closed": # if keyword is closed
+            members_closed = {
+                member_id: member_data
+                for member_id, member_data in members.items()
+                if member_data["closed"] == True
+            }
+            if members_closed == {}:
+                return JSONResponse(
+                    status_code=status.HTTP_200_OK,
+                    content=ResponseModel.success(
+                        data=members_closed, message="No room member has closed this room"
+                    ),
+                )
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content=ResponseModel.success(
+                    data=members_closed, message="Closed room members retrieved successfully"
+                ),
+            )
 
     # if keyword is not supplied
     return JSONResponse(
         status_code=status.HTTP_200_OK,
         content=ResponseModel.success(
             data=members,
-            message="Room members retrieved successfully",
+            message="All room members retrieved successfully",
         ),
     )
-   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# @router.get(
+#     "/org/{org_id}/rooms/{room_id}/members",
+#     response_model=ResponseModel,
+#     status_code=status.HTTP_200_OK,
+#     responses={
+#         400: {"detail": "Invalid keyword supplied"},
+#         404: {"detail": "Room not found"},
+#         424: {"detail": "Failure to retrieve room members"},
+#     },
+# )
+# async def get_members(org_id: str, room_id: str, keyword: Optional[str] = None):
+
+#     """Get room members.
+#     Returns all members in a room if the room is found in the database
+#     Returns filtered members in a room if keyword is supplied
+#     Raises HTTP_400_BAD_REQUEST if keyword supplied is not admin or member
+#     Raises HTTP_404_NOT_FOUND if the room is not found
+#     Raises HTTP_424_FAILED_DEPENDENCY if there is an error retrieving the room members
+#     Args:
+#         org_id (str): A unique identifier of an organisation
+#         room_id (str): A unique identifier of the room
+#     Returns:
+#         HTTP_200_OK (Room members retrieved successfully):
+
+#         {
+#             "status": "success",
+#             "message": "Room members retrieved",
+#             "data": {
+#                 "61696f5ac4133ddaa309dcfe": {
+#                 "closed": false,
+#                 "role": "admin",
+#                 "starred": false
+#                 },
+#                 "6169704bc4133ddaa309dd07": {
+#                 "closed": false,
+#                 "role": "admin",
+#                 "starred": false
+#                 }
+#             }
+#         }
+
+#     Raises:
+#         HTTPException [400]: Invalid keyword supplied
+#         HTTPException [404]: Room not found
+#         HTTPException [424]: Failure to retrieve room members
+#     """
+#     room = await get_room(org_id, room_id)
+
+#     if not room:
+#         raise HTTPException(
+#             status_code=status.HTTP_404_NOT_FOUND, detail="Room doesn't exist"
+#         )
+
+#     members = room["room_members"]
+#     if members and members.get("status_code") is not None:
+#         raise HTTPException(
+#             status_code=status.HTTP_424_FAILED_DEPENDENCY,
+#             detail="Failure to retrieve room members",
+#         )
+
+#     if keyword:  # if keyword is supplied
+#         if keyword not in ["admin", "member"]:
+#             raise HTTPException(
+#                 status_code=status.HTTP_400_BAD_REQUEST,
+#                 detail="Invalid keyword supplied",
+#             )
+
+#         filtered_members = {
+#             member_id: member_data
+#             for member_id, member_data in members.items()
+#             if member_data["role"] == keyword
+#         }
+#         return JSONResponse(
+#             status_code=status.HTTP_200_OK,
+#             content=ResponseModel.success(
+#                 data=filtered_members, message="Room members retrieved successfully"
+#             ),
+#         )
+
+#     # if keyword is not supplied
+#     return JSONResponse(
+#         status_code=status.HTTP_200_OK,
+#         content=ResponseModel.success(
+#             data=members,
+#             message="Room members retrieved successfully",
+#         ),
+#     )
+
+
+
+
+
 
 # @router.get(
 #     "/org/{org_id}/rooms/{room_id}/memberslist",
