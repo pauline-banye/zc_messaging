@@ -7,7 +7,7 @@ client = TestClient(app)
 
 create_room_url = "api/v1/org/6619ba4671a5f54782939d384/members/619ba4671a5f54782939d385/rooms"
 
-test_payload_channel = {
+payload_channel = {
     "room_name": "testing_with_pauline",
     "room_type": "CHANNEL",
     "description": "testing",
@@ -23,7 +23,7 @@ test_payload_channel = {
     "is_archived": False
 }
 
-test_payload_group_dm = {
+payload_group_dm = {
   "room_name": "test group dm",
   "room_type": "GROUP_DM",
   "room_members": {
@@ -52,7 +52,7 @@ test_payload_group_dm = {
   "is_archived": False
 }
 
-test_payload_dm = {
+payload_dm = {
   "room_name": "test dm",
   "room_type": "DM",
   "room_members": {
@@ -71,6 +71,7 @@ test_payload_dm = {
   "is_archived": False
 }
 
+
 fake_data_channel = {
         "room_name": "testing_with_pauline",
         "room_type": "CHANNEL",
@@ -79,7 +80,7 @@ fake_data_channel = {
             "role": "member",
             "starred": False,
             "closed": False
-        }
+            }
         },
         "created_at": "2022-01-10 19:33:13.315281",
         "description": "testing",
@@ -966,58 +967,77 @@ fake_all_members = [
 #         }          
 
 
-
 @pytest.mark.asyncio
-async def test_channel_success_status_code(
-    mock_get_all_members, mock_get_org_rooms, mock_write
-    ):
-    """
-    Create channel successful status code
+async def test_get_room_members(
+    mock_get_user_room, mock_read
+):
+    """Retrieve room members in the room
     
     Args:
-        mock_get_room (AsyncMock): Asynchronous external api call
-        mock_write (AsyncMock): Asynchronous external api call
+        mock_get_user_room (AsyncMock): Asynchronous external api call
+        mock_read (AsyncMock): Asynchronous external api call
+    
     """
-    
-    mock_get_org_rooms.return_value = fake_org_rooms
-    mock_get_all_members.return_value = fake_all_members
+    mock_get_user_room.return_value = fake_data_group_dm
     
     
-    mock_write.return_value = {
-        "status": 201,
-        "message": "success",
-        "data": {
-            "insert_count": 1,
-            "object_id": "61dc8b9eeba8adb50ca13a10",
-            }
-        }
+    mock_read.return_value = {
+        "status": 200,
+        "message": "All room members retrieved successfully",
+       
+# @pytest.mark.asyncio
+# async def test_channel_success_status_code(
+#     mock_get_all_members, mock_get_org_rooms, room_mock_write
+#     ):
+#     """
+#     Create channel successful status code
     
-    response = client.post(create_room_url, json=test_payload_channel)
-    assert response.status_code == 201
-    assert response.json() == {
-        "status": "success",
-        "message": "room created",
-        "data": fake_data_channel
-    # "data": {
-    #     "room_name": "testing_with_pauline",
-    #     "room_type": "CHANNEL",
-    #     "room_members": {
-    #     "619ba4671a5f54782939d385": {
-    #         "role": "member",
-    #         "starred": False,
-    #         "closed": False
-    #     }
-    #     },
-    #     "created_at": "2022-01-10 19:33:13.315281",
-    #     "description": "testing",
-    #     "topic": "testing",
-    #     "is_private": False,
-    #     "is_archived": False,
-    #     "id": "61dc8b9eeba8adb50ca13a10",
-    #     "org_id": "619ba4671a5f54782939d384",
-    #     "created_by": "619ba4671a5f54782939d385"
-    #     }
-    }
+#     Args:
+#         mock_get_room (AsyncMock): Asynchronous external api call
+#         mock_write (AsyncMock): Asynchronous external api call
+#     """
+    
+#     mock_get_org_rooms.return_value = fake_org_rooms
+#     mock_get_all_members.return_value = fake_all_members
+    
+    
+#     room_mock_write.return_value = {
+#         "status": 201,
+#         "message": "success",
+#         "data": {
+#             "insert_count": 1,
+#             "object_id": "61dc8b9eeba8adb50ca13a10",
+#             }
+#         }
+    
+#     response = client.post(create_room_url, json=payload_channel)
+#     assert response.status_code == 201
+#     assert response.json() == {
+#         "status": "success",
+#         "message": "room created",
+#         "data": fake_data_channel
+        
+        
+#     # "data": {
+#     #     "room_name": "testing_with_pauline",
+#     #     "room_type": "CHANNEL",
+#     #     "room_members": {
+#     #     "619ba4671a5f54782939d385": {
+#     #         "role": "member",
+#     #         "starred": False,
+#     #         "closed": False
+#     #     }
+#     #     },
+#     #     "created_at": "2022-01-10 19:33:13.315281",
+#     #     "description": "testing",
+#     #     "topic": "testing",
+#     #     "is_private": False,
+#     #     "is_archived": False,
+#     #     "id": "61dc8b9eeba8adb50ca13a10",
+#     #     "org_id": "619ba4671a5f54782939d384",
+#     #     "created_by": "619ba4671a5f54782939d385"
+#     #     }
+#     }
 
 
 # @pytest.mark.asyncio

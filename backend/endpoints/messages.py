@@ -1,7 +1,7 @@
 from typing import Dict, List
 
 from fastapi import APIRouter, BackgroundTasks, Body, HTTPException, status
-from fastapi_pagination import Page, add_pagination, paginate
+# from fastapi_pagination import Page, add_pagination, paginate
 from schema.custom import ObjId
 from schema.message import Emoji, Message, MessageRequest, Thread
 from schema.response import ResponseModel
@@ -235,7 +235,8 @@ async def update_message(
 
 @router.get(
     "/org/{org_id}/rooms/{room_id}/messages",
-    response_model=Page[Message],
+    response_model=ResponseModel,
+    # response_model=Page[Message],
     status_code=status.HTTP_200_OK,
     responses={424: {"detail": "ZC Core failed"}},
 )
@@ -258,14 +259,14 @@ async def get_messages(org_id, room_id):
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
             detail="Zc Core failed",
         )
-    # return JSONResponse(
-    #     content=ResponseModel.success(data=response, message="Messages retrieved"),
-    #     status_code=status.HTTP_200_OK,
-    # )
-    return paginate(response)
+    return JSONResponse(
+        content=ResponseModel.success(data=response, message="Messages retrieved"),
+        status_code=status.HTTP_200_OK,
+    )
+    # return paginate(response)
 
 
-add_pagination(router)
+# add_pagination(router)
 
 
 @router.get(

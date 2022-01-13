@@ -47,28 +47,28 @@
 #   "room_type": "GROUP_DM",
 #   "room_members": {
 #     "61696f5ac4133ddaa309dcfe": {
-#       "closed": false,
+#       "closed": False,
 #       "role": "admin",
-#       "starred": false
+#       "starred": False
 #     },
 #     "6169704bc4133ddaa309dd07": {
-#       "closed": false,
+#       "closed": False,
 #       "role": "admin",
-#       "starred": false
+#       "starred": False
 #     },
 #     "619ba4671a5f54782939d385": {
-#       "closed": false,
+#       "closed": False,
 #       "role": "admin",
-#       "starred": false
+#       "starred": False
 #     },
 #     "619baa5c1a5f54782939d386": {
-#       "closed": false,
+#       "closed": False,
 #       "role": "member",
-#       "starred": false
+#       "starred": False
 #     }
 #   },
-#   "is_private": false,
-#   "is_archived": false
+#   "is_private": False,
+#   "is_archived": False
 # }
 
 # fake_data_channel = {
@@ -789,28 +789,28 @@ test_payload_group_dm = {
   "room_type": "GROUP_DM",
   "room_members": {
     "61696f5ac4133ddaa309dcfe": {
-      "closed": false,
+      "closed": False,
       "role": "admin",
-      "starred": false
+      "starred": False
     },
     "6169704bc4133ddaa309dd07": {
-      "closed": false,
+      "closed": False,
       "role": "admin",
-      "starred": false
+      "starred": False
     },
     "619ba4671a5f54782939d385": {
-      "closed": false,
+      "closed": False,
       "role": "admin",
-      "starred": false
+      "starred": False
     },
     "619baa5c1a5f54782939d386": {
-      "closed": false,
+      "closed": False,
       "role": "member",
-      "starred": false
+      "starred": False
     }
   },
-  "is_private": false,
-  "is_archived": false
+  "is_private": False,
+  "is_archived": False
 }
 
 fake_data_channel = {
@@ -1355,249 +1355,252 @@ fake_admin_member = {
 #         }          
 
     
-@pytest.mark.asyncio
-async def test_channel_success_status_code(
-    mock_get_admin_members, mock_write
-    ):
-    """
-    Create channel successful status code
     
-    Args:
-        mock_get_room (AsyncMock): Asynchronous external api call
-        mock_write (AsyncMock): Asynchronous external api call
-    """
-    mock_get_admin_members.return_value = fake_admin_member
     
-    mock_write.return_value = {
-        "status": 201,
-        "message": "success",
-        "data": {
-            "insert_count": 1,
-            "object_id": "c31a5f",
-            }
-        }
     
-    response = client.post(create_channel_url, json=test_payload_channel)
-    assert response.status_code != 400
-    # assert response.status_code == 201
+# @pytest.mark.asyncio
+# async def test_channel_success_status_code(
+#     mock_get_admin_members, mock_write
+#     ):
+#     """
+#     Create channel successful status code
+    
+#     Args:
+#         mock_get_room (AsyncMock): Asynchronous external api call
+#         mock_write (AsyncMock): Asynchronous external api call
+#     """
+#     mock_get_admin_members.return_value = fake_admin_member
+    
+#     mock_write.return_value = {
+#         "status": 201,
+#         "message": "success",
+#         "data": {
+#             "insert_count": 1,
+#             "object_id": "c31a5f",
+#             }
+#         }
+    
+#     response = client.post(create_channel_url, json=test_payload_channel)
+#     assert response.status_code != 400
+#     # assert response.status_code == 201
 
 
-@pytest.mark.asyncio
-async def test_dm_success_status_code(
-    mock_get_org_members, mock_write
-    ):
-    """
-    Create channel successful status code
+# @pytest.mark.asyncio
+# async def test_dm_success_status_code(
+#     mock_get_org_members, mock_write
+#     ):
+#     """
+#     Create channel successful status code
     
-    Args:
-        mock_get_room (AsyncMock): Asynchronous external api call
-        mock_write (AsyncMock): Asynchronous external api call
-    """
-    mock_get_org_members.return_value = fake_org_members
+#     Args:
+#         mock_get_room (AsyncMock): Asynchronous external api call
+#         mock_write (AsyncMock): Asynchronous external api call
+#     """
+#     mock_get_org_members.return_value = fake_org_members
     
-    mock_write.return_value = {
-        "status": 201,
-        "message": "success",
-        "data": {
-            "insert_count": 1,
-            "object_id": "c31a5f",
-            }
-        }
+#     mock_write.return_value = {
+#         "status": 201,
+#         "message": "success",
+#         "data": {
+#             "insert_count": 1,
+#             "object_id": "c31a5f",
+#             }
+#         }
     
-    response = client.post(create_channel_url, json=test_payload_dm)
-    # assert response.status_code != 400
-    assert response.status_code != 201
+#     response = client.post(create_channel_url, json=test_payload_dm)
+#     # assert response.status_code != 400
+#     assert response.status_code != 201
 
 
-@pytest.mark.asyncio
-async def test_channel_url_is_invalid(
-    mock_get_admin_members, mock_write
-    ):
-    """
-    Create channel url is valid
+# @pytest.mark.asyncio
+# async def test_channel_url_is_invalid(
+#     mock_get_admin_members, mock_write
+#     ):
+#     """
+#     Create channel url is valid
     
-    Args:
-        mock_get_room (AsyncMock): Asynchronous external api call
-        mock_write (AsyncMock): Asynchronous external api call
-    """
-    mock_get_admin_members.return_value = fake_admin_member
-    mock_write.data = test_payload_channel
-    invalid_channel_url = "api/v1/org/klitm8/members/we54kl/rooms"
+#     Args:
+#         mock_get_room (AsyncMock): Asynchronous external api call
+#         mock_write (AsyncMock): Asynchronous external api call
+#     """
+#     mock_get_admin_members.return_value = fake_admin_member
+#     mock_write.data = test_payload_channel
+#     invalid_channel_url = "api/v1/org/klitm8/members/we54kl/rooms"
     
-    response = client.post(invalid_channel_url, json=test_payload_channel)
+#     response = client.post(invalid_channel_url, json=test_payload_channel)
     
-    assert create_channel_url != invalid_channel_url
-    assert response.status_code == 422
+#     assert create_channel_url != invalid_channel_url
+#     assert response.status_code == 422
 
 
-@pytest.mark.asyncio
-async def test_member_not_in_org(mock_get_org_members, mock_write):
-    """
-    Create DM unsuccessful when member is not in the organization
+# @pytest.mark.asyncio
+# async def test_member_not_in_org(mock_get_org_members, mock_write):
+#     """
+#     Create DM unsuccessful when member is not in the organization
     
-    Args:
-        mock_get_org_members (AsyncMock): Asynchronous external api call
-    """
-    mock_get_org_members.return_value = fake_org_members
+#     Args:
+#         mock_get_org_members (AsyncMock): Asynchronous external api call
+#     """
+#     mock_get_org_members.return_value = fake_org_members
     
-    test_payload_dm["room_members"] = {
-        "bkbu87": {
-            "role": "member",
-            "starred": False,
-            "closed": False
-            }
-        }
+#     test_payload_dm["room_members"] = {
+#         "bkbu87": {
+#             "role": "member",
+#             "starred": False,
+#             "closed": False
+#             }
+#         }
     
-    mock_write.return_value = {
-        "status": 400,
-        "message": "error",
-        "data": {
-            "insert_count": 0,
-            "object_id": None,
-            }
-        }
+#     mock_write.return_value = {
+#         "status": 400,
+#         "message": "error",
+#         "data": {
+#             "insert_count": 0,
+#             "object_id": None,
+#             }
+#         }
      
-    response = client.post(create_dm_url, json=test_payload_dm)
-    assert response.status_code == 400
-    assert response.json() == {'detail': 'DM can only have 2 unique members'}#{"detail": "sender not a member of the organization"}
+#     response = client.post(create_dm_url, json=test_payload_dm)
+#     assert response.status_code == 400
+#     assert response.json() == {'detail': 'DM can only have 2 unique members'}#{"detail": "sender not a member of the organization"}
     
 
-@pytest.mark.asyncio
-async def test_dm_url_is_invalid(mock_get_org_members, mock_write):
-    """
-    Create DM with invalid url
+# @pytest.mark.asyncio
+# async def test_dm_url_is_invalid(mock_get_org_members, mock_write):
+#     """
+#     Create DM with invalid url
     
-    Args:
-    mock_get_org_members (AsyncMock): Asynchronous external api call
-    mock_write (AsyncMock): Asynchronous external api call
+#     Args:
+#     mock_get_org_members (AsyncMock): Asynchronous external api call
+#     mock_write (AsyncMock): Asynchronous external api call
     
-    """
-    mock_get_org_members.return_value = fake_org_members
-    mock_write.data = test_payload_dm
-    invalid_dm_url = "api/v1/org/fgyw35/members/yii93/rooms"
+#     """
+#     mock_get_org_members.return_value = fake_org_members
+#     mock_write.data = test_payload_dm
+#     invalid_dm_url = "api/v1/org/fgyw35/members/yii93/rooms"
     
-    response = client.post(invalid_dm_url, json=test_payload_dm)
+#     response = client.post(invalid_dm_url, json=test_payload_dm)
     
-    assert create_channel_url != invalid_dm_url
-    assert response.status_code == 400
+#     assert create_channel_url != invalid_dm_url
+#     assert response.status_code == 400
 
 
-fake_room_members_url = "api/v1/org/619ba4671a5f54782939d384/rooms/619e28c31a5f54782939d59a/members"
+# fake_room_members_url = "api/v1/org/619ba4671a5f54782939d384/rooms/619e28c31a5f54782939d59a/members"
 
-fake_room_data = {
-    '_id': '619e28c31a5f54782939d59a', 
-    'created_at': '2021-11-24 11:23:11.361210', 
-    'created_by': '61696f5ac4133ddaa309dcfe', 
-    'description': 'Section for general information', 
-    'id': None, 
-    'is_archived': False, 
-    'is_private': False, 
-    'org_id': '619ba4671a5f54782939d384', 
-    "room_members": {
-        '61696f5ac4133ddaa309dcfe': {
-            'closed': False,
-            'role': 'admin',
-            'starred': False
-            }, 
-        '6169704bc4133ddaa309dd07': {
-            'closed': False,
-            'role': 'admin',
-            'starred': False
-            }, 
-        '619ba4671a5f54782939d385': {
-            'closed': False, 
-            'role': 'admin', 
-            'starred': False
-            }, 
-        '619baa5c1a5f54782939d386': {
-            'closed': False, 
-            'role': 'member', 
-            'starred': False
-            }
-        }, 
-    'room_name': 'random',
-    'room_type': 'CHANNEL',
-    'topic': 'Information'
-    }
+# fake_room_data = {
+#     '_id': '619e28c31a5f54782939d59a', 
+#     'created_at': '2021-11-24 11:23:11.361210', 
+#     'created_by': '61696f5ac4133ddaa309dcfe', 
+#     'description': 'Section for general information', 
+#     'id': None, 
+#     'is_archived': False, 
+#     'is_private': False, 
+#     'org_id': '619ba4671a5f54782939d384', 
+#     "room_members": {
+#         '61696f5ac4133ddaa309dcfe': {
+#             'closed': False,
+#             'role': 'admin',
+#             'starred': False
+#             }, 
+#         '6169704bc4133ddaa309dd07': {
+#             'closed': False,
+#             'role': 'admin',
+#             'starred': False
+#             }, 
+#         '619ba4671a5f54782939d385': {
+#             'closed': False, 
+#             'role': 'admin', 
+#             'starred': False
+#             }, 
+#         '619baa5c1a5f54782939d386': {
+#             'closed': False, 
+#             'role': 'member', 
+#             'starred': False
+#             }
+#         }, 
+#     'room_name': 'random',
+#     'room_type': 'CHANNEL',
+#     'topic': 'Information'
+#     }
 
-fake_room_members = {
-    '61696f5ac4133ddaa309dcfe': {
-        'closed': False,
-        'role': 'admin',
-        'starred': False
-        }, 
-    '6169704bc4133ddaa309dd07': {
-        'closed': False, 
-        'role': 'admin', 
-        'starred': False
-        }, 
-    '619ba4671a5f54782939d385': {
-        'closed': False, 
-        'role': 'admin',
-        'starred': False
-        }, 
-    '619baa5c1a5f54782939d386': {
-        'closed': False,
-        'role': 'member',
-        'starred': False
-        }
-    }
+# fake_room_members = {
+#     '61696f5ac4133ddaa309dcfe': {
+#         'closed': False,
+#         'role': 'admin',
+#         'starred': False
+#         }, 
+#     '6169704bc4133ddaa309dd07': {
+#         'closed': False, 
+#         'role': 'admin', 
+#         'starred': False
+#         }, 
+#     '619ba4671a5f54782939d385': {
+#         'closed': False, 
+#         'role': 'admin',
+#         'starred': False
+#         }, 
+#     '619baa5c1a5f54782939d386': {
+#         'closed': False,
+#         'role': 'member',
+#         'starred': False
+#         }
+#     }
 
-fake_member_filter =  {
-    '619baa5c1a5f54782939d386': {
-        'closed': False,
-        'role': 'member',
-        'starred': False
-        }
-    }
+# fake_member_filter =  {
+#     '619baa5c1a5f54782939d386': {
+#         'closed': False,
+#         'role': 'member',
+#         'starred': False
+#         }
+#     }
 
-success = {
-    "status": "success",
-    "message": "Room members retrieved successfully",
-    "data": {
-    '61696f5ac4133ddaa309dcfe': {
-        'closed': False,
-        'role': 'admin',
-        'starred': False
-        }, 
-    '6169704bc4133ddaa309dd07': {
-        'closed': False, 
-        'role': 'admin', 
-        'starred': False
-        }, 
-    '619ba4671a5f54782939d385': {
-        'closed': False, 
-        'role': 'admin',
-        'starred': False
-        }, 
-    '619baa5c1a5f54782939d386': {
-        'closed': False,
-        'role': 'member',
-        'starred': False
-        }
-    }
-}
+# success = {
+#     "status": "success",
+#     "message": "Room members retrieved successfully",
+#     "data": {
+#     '61696f5ac4133ddaa309dcfe': {
+#         'closed': False,
+#         'role': 'admin',
+#         'starred': False
+#         }, 
+#     '6169704bc4133ddaa309dd07': {
+#         'closed': False, 
+#         'role': 'admin', 
+#         'starred': False
+#         }, 
+#     '619ba4671a5f54782939d385': {
+#         'closed': False, 
+#         'role': 'admin',
+#         'starred': False
+#         }, 
+#     '619baa5c1a5f54782939d386': {
+#         'closed': False,
+#         'role': 'member',
+#         'starred': False
+#         }
+#     }
+# }
 
-@pytest.mark.asyncio
-async def test_get_room_members_sucessful(mock_get_user_room, mock_read):
-    """Get room members successful
+# @pytest.mark.asyncio
+# async def test_get_room_members_sucessful(mock_get_user_room, mock_read):
+#     """Get room members successful
     
-    Args:
-        mock_get_room (AsyncMock): Asynchronous external api call
-        mock_read (AsyncMock): Asynchronous external api call
-    """
-    mock_get_user_room.return_value = fake_room_data
-    fake_room_members = fake_room_data["room_members"]
+#     Args:
+#         mock_get_room (AsyncMock): Asynchronous external api call
+#         mock_read (AsyncMock): Asynchronous external api call
+#     """
+#     mock_get_user_room.return_value = fake_room_data
+#     fake_room_members = fake_room_data["room_members"]
     
-    mock_read.return_value = {
-        'status': 'success',
-        'message': 'Room members retrieved successfully',
-        'data': fake_room_members
-    }
+#     mock_read.return_value = {
+#         'status': 'success',
+#         'message': 'Room members retrieved successfully',
+#         'data': fake_room_members
+#     }
     
-    response = await client.get(fake_room_members_url)
-    assert response.status_code == 200
-    assert response.json() == success
+#     response = await client.get(fake_room_members_url)
+#     assert response.status_code == 200
+#     assert response.json() == success
     
 
 
