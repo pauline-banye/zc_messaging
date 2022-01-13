@@ -30,9 +30,9 @@ class DataStorage:
             self.plugin_id = plugin["id"] if plugin else None
         except requests.exceptions.RequestException as exception:
             print(exception)
-            # raise HTTPException from exception(
-            #     status_code=status.HTTP_408_REQUEST_TIMEOUT, detail="Request Timeout"
-            # )
+            raise HTTPException from exception(
+                status_code=status.HTTP_408_REQUEST_TIMEOUT, detail="Request Timeout"
+            )
 
     async def write(self, collection_name, data):
         """Function to write into db
