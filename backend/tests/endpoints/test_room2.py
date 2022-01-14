@@ -89,6 +89,29 @@
 # }
 
 
+
+        # option 2
+        # "data": {
+        #     "room_name": "test group dm",
+        #     "room_type": "GROUP_DM",
+        #     "room_members": {
+        #         "61696f5": {"role": "admin", "starred": False, "closed": False},
+        #         "6169704": {"role": "admin", "starred": False, "closed": False},
+        #         "619ba46": {"role": "admin", "starred": False, "closed": False},
+        #         "619baa5": {"role": "member", "starred": False, "closed": False},
+        #     },
+        #     "created_at": "2022-01-11 03:18:02.364291",
+        #     "description": None,
+        #     "topic": None,
+        #     "is_private": True,
+        #     "is_archived": False,
+        #     "id": "61dcf85",
+        #     "org_id": "619ba46",
+        #     "created_by": "61696f5",
+        # }
+
+
+
 # fake_data_channel = {
 #         "room_name": "testing_with_pauline",
 #         "room_type": "CHANNEL",
@@ -134,40 +157,40 @@
 #     "created_by": "619ba4671a5f54782939d385"
 #   }
 
-fake_data_group_dm = {
-    "room_name": "test group dm",
-    "room_type": "GROUP_DM",
-    "room_members": {
-      "61696f5ac4133ddaa309dcfe": {
-        "role": "admin",
-        "starred": False,
-        "closed": False
-      },
-      "6169704bc4133ddaa309dd07": {
-        "role": "admin",
-        "starred": False,
-        "closed": False
-      },
-      "619ba4671a5f54782939d385": {
-        "role": "admin",
-        "starred": False,
-        "closed": False
-      },
-      "619baa5c1a5f54782939d386": {
-        "role": "member",
-        "starred": False,
-        "closed": False
-      }
-    },
-    "created_at": "2022-01-11 03:18:02.364291",
-    "description": None,
-    "topic": None,
-    "is_private": True,
-    "is_archived": False,
-    "id": "61dcf855eba8adb50ca13a24",
-    "org_id": "619ba4671a5f54782939d384",
-    "created_by": "619ba4671a5f54782939d385"
-}
+# fake_data_group_dm = {
+#     "room_name": "test group dm",
+#     "room_type": "GROUP_DM",
+#     "room_members": {
+#       "61696f5ac4133ddaa309dcfe": {
+#         "role": "admin",
+#         "starred": False,
+#         "closed": False
+#       },
+#       "6169704bc4133ddaa309dd07": {
+#         "role": "admin",
+#         "starred": False,
+#         "closed": False
+#       },
+#       "619ba4671a5f54782939d385": {
+#         "role": "admin",
+#         "starred": False,
+#         "closed": False
+#       },
+#       "619baa5c1a5f54782939d386": {
+#         "role": "member",
+#         "starred": False,
+#         "closed": False
+#       }
+#     },
+#     "created_at": "2022-01-11 03:18:02.364291",
+#     "description": None,
+#     "topic": None,
+#     "is_private": True,
+#     "is_archived": False,
+#     "id": "61dcf855eba8adb50ca13a24",
+#     "org_id": "619ba4671a5f54782939d384",
+#     "created_by": "619ba4671a5f54782939d385"
+# }
 
 # fake_org_members = {
 #     "61696f5ac4133ddaa309dcfe": {
@@ -918,14 +941,14 @@ fake_data_group_dm = {
 # #         "data": fake_data_channel
 # #         }
     
-# #     mock_write.return_value = {
-# #         "status": 201,
-# #         "message": "success",
-# #         "data": {
-# #             "insert_count": 1,
-# #             "object_id": "c31a5f"
-# #             }
-# #         }
+    # mock_write.return_value = {
+    #     "status": 201,
+    #     "message": "success",
+    #     "data": {
+    #         "insert_count": 1,
+    #         "object_id": "c31a5f"
+    #         }
+    #     }
 # #     mock_centrifugo.return_value = {
 # #         "status_code": 200
 # #         }
@@ -1073,47 +1096,47 @@ fake_data_group_dm = {
 # #         mock_write (AsyncMock): Asynchronous external api call
 # #         mock_centrifugo (AsyncMock): Asynchronous external api call
 # #     """
-# #     mock_get_org_members.return_value = fake_org_members
+    # mock_get_org_members.return_value = fake_org_members
     
-# #     mock_write.return_value = {
-# #         "status": 200,
-# #         "message": "success",
-# #         "data": {
-# #             "insert_count": 1,
-# #             "object_id": "39fy78",
-# #             }
-# #         }
-# #     mock_centrifugo.return_value = {
-# #         "status_code": 200
-# #         }
+    # mock_write.return_value = {
+    #     "status": 200,
+    #     "message": "success",
+    #     "data": {
+    #         "insert_count": 1,
+    #         "object_id": "39fy78",
+    #         }
+    #     }
+    # mock_centrifugo.return_value = {
+    #     "status_code": 200
+    #     }
     
-# #     response = client.post(create_dm_url, json=test_payload_dm)
-# #     # assert response.status_code == 200
-# #     # assert response.status_code == 400
-# #     assert mock_write.status_code == 200
-# #     assert response.json() == {
-# #         "status": "success",
-# #         "message": "Room created",
-# #         "data": {
-# #             "room_name": "e21e10_dm",
-# #             "room_type": "DM",
-# #             "room_members": {
-# #                 "e21e10": {
-# #                 "role": "member",
-# #                 "starred": False,
-# #                 "closed": False
-# #                 }
-# #             },
-# #             "created_at": "2022-01-09 11:23:11.361210",
-# #             "description": "personal message",
-# #             "topic": "test_dm",
-# #             "is_private": False,
-# #             "is_archived": False,
-# #             "id": "39fy78",
-# #             "org_id": "619ba4",
-# #             "created_by": "e21e10"
-# #             }
-# #         }
+    # response = client.post(create_dm_url, json=test_payload_dm)
+    # # assert response.status_code == 200
+    # # assert response.status_code == 400
+    # assert mock_write.status_code == 200
+    # assert response.json() == {
+    #     "status": "success",
+    #     "message": "Room created",
+    #     "data": {
+    #         "room_name": "e21e10_dm",
+    #         "room_type": "DM",
+    #         "room_members": {
+    #             "e21e10": {
+    #             "role": "member",
+    #             "starred": False,
+    #             "closed": False
+    #             }
+    #         },
+    #         "created_at": "2022-01-09 11:23:11.361210",
+    #         "description": "personal message",
+    #         "topic": "test_dm",
+    #         "is_private": False,
+    #         "is_archived": False,
+    #         "id": "39fy78",
+    #         "org_id": "619ba4",
+    #         "created_by": "e21e10"
+    #         }
+    #     }
 
 
 # # @pytest.mark.asyncio

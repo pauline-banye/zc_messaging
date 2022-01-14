@@ -46,6 +46,7 @@ async def create_room(
 
     DB = DataStorage(org_id)
     room_obj = Room(**request.dict(), org_id=org_id, created_by=member_id)
+    print("room object",room_obj)
 
     # check if creator is in room members
     if member_id not in room_obj.room_members.keys():
@@ -56,8 +57,11 @@ async def create_room(
         }
 
     response = await DB.write(ROOM_COLLECTION, data=room_obj.dict())
+    print("response", response)
+    
     if response and response.get("status_code", None) is None:
         room_id = {"room_id": response.get("data").get("object_id")}
+        print("room_id", room_id)
 
         background_tasks.add_task(
             sidebar.publish,
@@ -67,11 +71,13 @@ async def create_room(
         )  # publish to centrifugo in the background
 
         room_obj.id = room_id["room_id"]  # adding the room id to the data
+        print("room object dict" , room_obj.dict())
         return JSONResponse(
-            content=ResponseModel.success(data=room_obj.dict(), message="room created"),
+            content=ResponseModel.success(
+                data=room_obj.dict(), message="room created"),
             status_code=status.HTTP_201_CREATED,
         )
-
+    print("response", response)
     raise HTTPException(
         status_code=status.HTTP_424_FAILED_DEPENDENCY,
         detail="unable to create room",

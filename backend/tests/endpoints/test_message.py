@@ -90,62 +90,62 @@
 # # }
 
 
-# # @pytest.mark.asyncio
-# # async def test_send_message_successful(mock_get_user_room, mock_write, mock_centrifugo):
-# #     """Send message successful
-# #     Args:
-# #         mock_get_room (AsyncMock): Asynchronous external api call
-# #         mock_write (AsyncMock): Asynchronous external api call
-# #         mock_centrifugo (AsyncMock): Asynchronous external api call
-# #     """
-# #     success_response = {
-# #         "status": "success",
-# #         "message": "new message sent",
-# #         "data": {
-# #             "sender_id": "e21e10",
-# #             "emojis": [],
-# #             "richUiData": {
-# #                 "blocks": [
-# #                     {
-# #                         "key": "eljik",
-# #                         "text": "HI, I'm mark.. new here",
-# #                         "type": "unstyled",
-# #                         "depth": 0,
-# #                         "inlineStyleRanges": [],
-# #                         "entityRanges": [],
-# #                         "data": {},
-# #                     }
-# #                 ],
-# #                 "entityMap": {},
-# #             },
-# #             "files": [],
-# #             "saved_by": [],
-# #             "timestamp": 0,
-# #             "created_at": "",
-# #             "room_id": "123456",
-# #             "org_id": "619ba4",
-# #             "message_id": "a1a1a1",
-# #             "edited": False,
-# #             "threads": [],
-# #         },
-# #     }
+# @pytest.mark.asyncio
+# async def test_send_message_successful(mock_get_user_room, mock_write, mock_centrifugo):
+#     """Send message successful
+#     Args:
+#         mock_get_room (AsyncMock): Asynchronous external api call
+#         mock_write (AsyncMock): Asynchronous external api call
+#         mock_centrifugo (AsyncMock): Asynchronous external api call
+#     """
+#     success_response = {
+#         "status": "success",
+#         "message": "new message sent",
+#         "data": {
+#             "sender_id": "e21e10",
+#             "emojis": [],
+#             "richUiData": {
+#                 "blocks": [
+#                     {
+#                         "key": "eljik",
+#                         "text": "HI, I'm mark.. new here",
+#                         "type": "unstyled",
+#                         "depth": 0,
+#                         "inlineStyleRanges": [],
+#                         "entityRanges": [],
+#                         "data": {},
+#                     }
+#                 ],
+#                 "entityMap": {},
+#             },
+#             "files": [],
+#             "saved_by": [],
+#             "timestamp": 0,
+#             "created_at": "",
+#             "room_id": "123456",
+#             "org_id": "619ba4",
+#             "message_id": "a1a1a1",
+#             "edited": False,
+#             "threads": [],
+#         },
+#     }
 
-# #     write_response = {
-# #         "status": 200,
-# #         "message": "success",
-# #         "data": {"insert_count": 1, "object_id": "a1a1a1"},
-# #     }
+#     write_response = {
+#         "status": 200,
+#         "message": "success",
+#         "data": {"insert_count": 1, "object_id": "a1a1a1"},
+#     }
 
-# #     centrifugo_response = {"status_code": 200}
+#     centrifugo_response = {"status_code": 200}
 
-# #     mock_get_user_room.return_value = fake_core_room_data
-# #     mock_write.return_value = write_response
-# #     mock_centrifugo.return_value = centrifugo_response
+#     mock_get_user_room.return_value = fake_core_room_data
+#     mock_write.return_value = write_response
+#     mock_centrifugo.return_value = centrifugo_response
 
-# #     response = client.post(send_message_test_url, json=send_message_test_payload)
-# #     assert response.status_code == 201
-# #     success_response["data"]["created_at"] = response.json()["data"]["created_at"]
-# #     assert response.json() == success_response
+#     response = client.post(send_message_test_url, json=send_message_test_payload)
+#     assert response.status_code == 201
+#     success_response["data"]["created_at"] = response.json()["data"]["created_at"]
+#     assert response.json() == success_response
 
 
 # # @pytest.mark.asyncio
