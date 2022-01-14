@@ -423,19 +423,19 @@
 # #     assert response.json() == {"detail": "sender not a member of this room"}
 
 
-# # @pytest.mark.asyncio
-# # async def test_send_message_empty_room(mock_get_user_room):
-# #     """Send message unsuccessful when get_rooms returns an empty dictonary.
+# @pytest.mark.asyncio
+# async def test_send_message_empty_room(mock_get_user_room):
+#     """Send message unsuccessful when get_rooms returns an empty dictonary.
 
-# #     Args:
-# #         mock_get_room (AsyncMock): Asynchronous external api call
-# #     """
+#     Args:
+#         mock_get_room (AsyncMock): Asynchronous external api call
+#     """
 
-# #     test_payload["sender_id"] = "e21e10"
-# #     mock_get_user_room.return_value = {}
-# #     response = client.post(send_message_test_url, json=test_payload)
-# #     assert response.status_code == 404
-# #     assert response.json() == {"detail": "Room not available"}
+#     test_payload["sender_id"] = "e21e10"
+#     mock_get_user_room.return_value = {}
+#     response = client.post(send_message_test_url, json=test_payload)
+#     assert response.status_code == 404
+#     assert response.json() == {"detail": "Room not available"}
 
 
 # # @pytest.mark.asyncio
@@ -681,6 +681,7 @@
 #     assert response.json() == {"detail": {"Message not sent": write_response}}
 
 
+
 # @pytest.mark.asyncio
 # async def test_update_message_successful(
 #     mock_get_message, mock_update_message, mock_centrifugo
@@ -776,3 +777,4 @@
 #     assert response.json() == {
 #         "detail": {"message not edited": mock_update_message.return_value}
 #     }
+    
