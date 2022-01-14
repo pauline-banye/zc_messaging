@@ -164,3 +164,34 @@ def fixture_mock_update_message(mocker):
         "endpoints.messages.DataStorage.update", side_effect=zc_core_update_data
     )
     return zc_core_update_data
+
+
+from unittest.mock import AsyncMock
+
+import pytest
+
+
+@pytest.fixture(name="mock_get_user_room")
+def fixture_mock_get_user_room(mocker):
+    """Patch for reading zc core.
+    Args:
+       mocker (Mock): For patching a third-party api call
+    Returns:
+       AsyncMock: An instance of the asyncmock class
+    """
+    core_read_mock = AsyncMock()
+    mocker.patch("utils.room_utils.DataStorage.read", side_effect=core_read_mock)
+    return core_read_mock
+
+
+@pytest.fixture(name="mock_update")
+def fixture_mock_update(mocker):
+    """Patch for writing to zc core.
+    Args:
+       mocker (Mock): For patching a third-party api call
+    Returns:
+        AsyncMock: An instance of the asyncmock class
+    """
+    async_mock_update = AsyncMock()
+    mocker.patch("endpoints.rooms.DataStorage.update", side_effect=async_mock_update)
+    return async_mock_update
