@@ -1,3 +1,4 @@
+from http.client import responses
 import json
 from typing import Dict, Optional
 
@@ -733,3 +734,70 @@ async def get_members(org_id: str, room_id: str):
 #         status_code=status.HTTP_424_FAILED_DEPENDENCY,
 #         detail="Failed to retrieve room members",
 #     )
+
+
+@router.delete(
+    "/org/{org_id}/rooms/{room_id}",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    responses={
+        404: {"detail": "Room not found"},
+        424: {"detail": "Failure to delete room"},
+    },
+)
+async def delete_room(org_id: str, room_id: str, background_tasks: BackgroundTasks):
+    """
+    Delete a room.
+    Deletes a room if the room is found in the database
+    Raises HTTP_404_NOT_FOUND if the room is not found
+    Raises HTTP_424_FAILED_DEPENDENCY if there is an error deleting the room
+    Args:
+        org_id (str): A unique identifier of an organisation
+        room_id (str): A unique identifier of the room
+        background_tasks (BackgroundTasks): Background tasks
+    Returns:
+        HTTP_200_OK (Room deleted)
+        {
+            "status": "success",
+            "message": "Room deleted successfully"
+        }
+    Raises:
+        HTTPException [404]: Room not found
+        HTTPException [424]: Failure to delete room
+    """
+    DB = DataStorage(org_id)
+    room = await get_room(org_id, room_id)
+    if not room:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Room not found"
+        )
+    
+    room_id = room["_id"]
+    remove = await DB.delete(ROOM_COLLECTION, room_id)
+    
+    background_tasks.add_task(
+        sidebar.publish,
+        org_id,
+        room_id
+    )  # publish to centrifugo in the background            
+    
+    if remove and remove.get("status_code") is not None:
+        raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail="Failure to delete room",
+        )
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content=ResponseModel.success(
+            data=remove, 
+            message="Room deleted successfully"
+        ),
+    )
+    
+        
+        
+    
+        
+
+
+
