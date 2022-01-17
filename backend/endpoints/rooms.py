@@ -537,7 +537,6 @@ async def get_members(org_id: str, room_id: str):
         )
 
     members = room["room_members"]
-    # members = room.get("room_members")
     if members and members.get("status_code") is not None:
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
