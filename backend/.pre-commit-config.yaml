@@ -14,24 +14,24 @@ repos:
       - id: pretty-format-json
 
 
-  - repo: https://github.com/psf/black
-    rev: 21.9b0
-    hooks:
-      - id: black
+  # - repo: https://github.com/psf/black
+  #   rev: 21.9b0
+  #   hooks:
+  #     - id: black
 
-  - repo: https://github.com/timothycrosley/isort
-    rev: 4.3.21-2
-    hooks:
-    - id: isort
-      args: [--filter-files]
-      files: \.py$
+  # - repo: https://github.com/timothycrosley/isort
+  #   rev: 4.3.21-2
+  #   hooks:
+  #   - id: isort
+  #     args: [--filter-files]
+  #     files: \.py$
 
   - repo: https://github.com/PyCQA/flake8
     rev: 4.0.1
     hooks:
       - id: flake8
         args:
-        - --max-line-length=100
+        - --max-line-length=150
 
 
   - repo: https://github.com/pre-commit/mirrors-pylint
@@ -47,3 +47,8 @@ repos:
         - --disable=R0902
         - --disable=R0903
         - --disable=C0103
+        - --disable=W0611
+        - --disable=W0104
+        - --disable=W0621
+        - --disable=R0912
+        - --disable=R0914

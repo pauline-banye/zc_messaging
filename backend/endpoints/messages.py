@@ -1,15 +1,19 @@
-from typing import Dict, List
+# from typing import Dict, List
 
-from fastapi import APIRouter, BackgroundTasks, Body, HTTPException, status
+# from fastapi import (APIRouter, BackgroundTasks, HTTPException,  # , Body,
+#                      status)
+from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 # from fastapi_pagination import Page, add_pagination, paginate
-from schema.message import Emoji, Message, MessageRequest, Thread
+# from schema.message import Emoji, Message, MessageRequest  # , Thread
+from schema.message import Emoji, Message, MessageRequest
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
 from utils.message_utils import (MESSAGE_COLLECTION, get_message,
                                  get_room_messages)
-from utils.room_utils import get_room, get_room_members
+# from utils.room_utils import get_room_members  # ,get_room,
+from utils.room_utils import get_room_members
 
 router = APIRouter()
 
@@ -418,8 +422,11 @@ async def delete_message(
         401: {"description": "Invalid room member"},
         404: {"description": "Message not found"},
         424: {
-            "description": "Failed to retrieve room members / Failed to add reaction or remove reaction"
-        },
+            "description": "Failed to retrieve room members||Failed to add reaction or remove reaction"
+        }
+        # 424: {
+        #     "description": "Failed to retrieve room members / Failed to add reaction or remove reaction"
+        # }
     },
 )
 async def reactions(
@@ -476,11 +483,10 @@ async def reactions(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Message not found",
         )
-    reactions = message.get("emojis")
+    # reactions = message.get("emojis") #original
+    reactions = message["emojis"]  # functional
+    # reactions = message.get({"emojis": []}) # not working unhashable type
 
-    # room = await get_room(org_id, room_id)  # get room
-    # members = room.get("room_members")  # get room members
-    # members = room["room_members"]
     members = await get_room_members(org_id, room_id)  # retrieve room members
     if not members:
         raise HTTPException(
