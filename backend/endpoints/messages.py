@@ -478,6 +478,9 @@ async def reactions(
         )
     reactions = message.get("emojis")
 
+    # room = await get_room(org_id, room_id)  # get room
+    # members = room.get("room_members")  # get room members
+    # members = room["room_members"]
     members = await get_room_members(org_id, room_id)  # retrieve room members
     if not members:
         raise HTTPException(

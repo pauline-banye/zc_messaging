@@ -33,6 +33,23 @@ def fixture_mock_dataStorage_write(mocker):
     return async_mock_write
 
 
+@pytest.fixture(name="mock_get_room_members")
+def fixture_mock_get_room_members(mocker):
+    """Patch for getting room members.
+
+    Args:
+       mocker (Mock): For patching a third-party api call
+
+    Returns:
+       AsyncMock: An instance of the asyncmock class
+    """
+    mock_get_room_members = AsyncMock()
+    mocker.patch(
+        "utils.room_utils.DataStorage.read", side_effect=mock_get_room_members
+    )
+    return mock_get_room_members
+
+
 @pytest.fixture(name="mock_centrifugo")
 def fixture_mock_centrifugo(mocker):
     """Patch for centrifugo external api call
