@@ -1,5 +1,5 @@
-from http.client import responses
 import json
+from http.client import responses
 from typing import Dict, Optional
 
 from fastapi import (APIRouter, BackgroundTasks, Body, HTTPException, Query,
@@ -47,7 +47,7 @@ async def create_room(
 
     DB = DataStorage(org_id)
     room_obj = Room(**request.dict(), org_id=org_id, created_by=member_id)
-    print("room object",room_obj)
+    print("room object", room_obj)
 
     # check if creator is in room members
     if member_id not in room_obj.room_members.keys():
@@ -59,7 +59,7 @@ async def create_room(
 
     response = await DB.write(ROOM_COLLECTION, data=room_obj.dict())
     print("response", response)
-    
+
     if response and response.get("status_code", None) is None:
         room_id = {"room_id": response.get("data").get("object_id")}
         print("room_id", room_id)
@@ -72,10 +72,9 @@ async def create_room(
         )  # publish to centrifugo in the background
 
         room_obj.id = room_id["room_id"]  # adding the room id to the data
-        print("room object dict" , room_obj.dict())
+        print("room object dict", room_obj.dict())
         return JSONResponse(
-            content=ResponseModel.success(
-                data=room_obj.dict(), message="room created"),
+            content=ResponseModel.success(data=room_obj.dict(), message="room created"),
             status_code=status.HTTP_201_CREATED,
         )
     print("response", response)
@@ -183,6 +182,7 @@ async def remove_member(
         400: {"detail": "the max number for a Group_DM is 9"},
         401: {"detail": "member not an admin"},
         403: {"detail": "DM room or not found"},
+        403: {"detail": "room not found || DM room cannot be joined"},
         424: {"detail": "failed to add new members to room"},
     },
 )
@@ -203,14 +203,17 @@ async def join_room(
         new_members: A dictionary of new members to be added to the room
     Returns:
         HTTP_200_OK: {
-                "status": 200,
-                "message": "success",
-                "room_members": {
-                    "619123member1": {"closed": False, "role": "admin", "starred": False},
-                    "619123member2": {"closed": False, "role": "admin", "starred": False},
-                    "619123member3": {"closed": False, "role": "admin", "starred": False}
+                "status": "success",
+                "message": "member(s) successfully added",
+                "data": {
+                    "room_members": {
+                        "619123member1": {"closed": False, "role": "admin", "starred": False},
+                        "619123member2": {"closed": False, "role": "member", "starred": False},
+                        "619123member3": {"closed": False, "role": "member", "starred": False},
+                    }
                 }
             }
+    Raises:
     Raises:
         HTTP_400_BAD_REQUEST: the max number for a Group_DM is 9
         HTTP_401_UNAUTHORIZED: member not in room or not an admin
@@ -476,15 +479,9 @@ async def get_room_by_id(org_id: str, room_id: str):
     if room:
         return JSONResponse(
             status_code=status.HTTP_200_OK,
-            content=ResponseModel.success(
-                data=room, 
-                message="room found"
-            ),
+            content=ResponseModel.success(data=room, message="room found"),
         )
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND, 
-        detail="room not found"
-        )
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="room not found")
 
 
 @router.get(
@@ -547,7 +544,7 @@ async def get_members(org_id: str, room_id: str):
         content=ResponseModel.success(
             data=members,
             message="Room members retrieved successfully",
-        )
+        ),
     )
 
 
@@ -716,10 +713,10 @@ async def get_members(org_id: str, room_id: str):
 #             "status": "success",
 #             "message": "Room Members",
 #             "data": [
-                # "61696f5ac4133ddaa309dcfe",
-                # "6169704bc4133ddaa309dd07",
-                # "619ba4671a5f54782939d385",
-                # "619baa5c1a5f54782939d386"
+# "61696f5ac4133ddaa309dcfe",
+# "6169704bc4133ddaa309dd07",
+# "619ba4671a5f54782939d385",
+# "619baa5c1a5f54782939d386"
 #             ]
 #         }
 
@@ -776,16 +773,14 @@ async def delete_room(org_id: str, room_id: str, background_tasks: BackgroundTas
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Room not found"
         )
-    
+
     room_id = room["_id"]
     remove = await DB.delete(ROOM_COLLECTION, room_id)
-    
+
     background_tasks.add_task(
-        sidebar.publish,
-        org_id,
-        room_id
-    )  # publish to centrifugo in the background            
-    
+        sidebar.publish, org_id, room_id
+    )  # publish to centrifugo in the background
+
     if remove and remove.get("status_code") is not None:
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
@@ -793,16 +788,5 @@ async def delete_room(org_id: str, room_id: str, background_tasks: BackgroundTas
         )
     return JSONResponse(
         status_code=status.HTTP_200_OK,
-        content=ResponseModel.success(
-            data=remove, 
-            message="Room deleted successfully"
-        ),
+        content=ResponseModel.success(data=remove, message="Room deleted successfully"),
     )
-    
-        
-        
-    
-        
-
-
-

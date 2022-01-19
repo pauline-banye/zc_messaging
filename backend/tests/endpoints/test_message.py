@@ -267,11 +267,11 @@
 #     """
 #     db = DataStorage("619ba4")
 #     db.plugin_id = "34453"
-#     mock_dataStorage_read.return_value = fake_core_room_data
-#     send_message_test_payload["sender_id"] = "yur859"
-#     response = client.post(send_message_test_url, json=send_message_test_payload)
-#     assert response.status_code == 404
-#     assert response.json() == {"detail": "sender not a member of this room"}
+# mock_dataStorage_read.return_value = fake_core_room_data
+# send_message_test_payload["sender_id"] = "yur859"
+# response = client.post(send_message_test_url, json=send_message_test_payload)
+# assert response.status_code == 404
+# assert response.json() == {"detail": "sender not a member of this room"}
 
 
 # @pytest.mark.asyncio
