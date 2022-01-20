@@ -495,18 +495,18 @@ async def reactions(
 
     new_reaction = request.dict()
     if new_reaction.get("reactedUsersId")[0] not in list(members):
-    # if new_reaction.request.get("reactedUsersId") not in list(members):
+        # if new_reaction.request.get("reactedUsersId") not in list(members):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid room member",
         )
     # if new_reaction["reactedUsersId"][0] not in list(
     #     members
-    #):  # check if user is in list of room members
-        # raise HTTPException(
-        #     status_code=status.HTTP_401_UNAUTHORIZED,
-        #     detail="Invalid room member",
-        # )
+    # ):  # check if user is in list of room members
+    # raise HTTPException(
+    #     status_code=status.HTTP_401_UNAUTHORIZED,
+    #     detail="Invalid room member",
+    # )
 
     # if no reactions exist for the message
     if not reactions:
@@ -531,14 +531,16 @@ async def reactions(
     # if reactions exist for the message
     for emoji in reactions:
         if emoji.get("name") == new_reaction.get("name"):
-        # if emoji["name"] == new_reaction["name"]:  # if emoji is already in reactions
+            # if emoji["name"] == new_reaction["name"]:  # if emoji is already in reactions
 
             # if user hasn't reacted with the emoji
             # if new_reaction["reactedUsersId"][0] not in emoji["reactedUsersId"]:
             #     emoji["reactedUsersId"].append(new_reaction["reactedUsersId"][0])
             #     emoji["count"] += 1
             if new_reaction.get("reactedUsersId")[0] not in emoji.get("reactedUsersId"):
-                emoji.get("reactedUsersId").append(new_reaction.get("reactedUsersId")[0])
+                emoji.get("reactedUsersId").append(
+                    new_reaction.get("reactedUsersId")[0]
+                )
                 # emoji.get("count") + 1
                 emoji["count"] += 1
 
@@ -563,12 +565,12 @@ async def reactions(
 
             # if user has reacted with the emoji
             # emoji["reactedUsersId"].remove(new_reaction["reactedUsersId"][0])
-            #emoji["count"] -= 1
+            # emoji["count"] -= 1
             emoji.get("reactedUsersId").remove(new_reaction.get("reactedUsersId")[0])
             emoji["count"] -= 1
 
             if emoji.get("count") != 0:
-            # if emoji["count"] != 0:  # if emoji count is not 0
+                # if emoji["count"] != 0:  # if emoji count is not 0
                 updated = await DB.update(
                     MESSAGE_COLLECTION,
                     document_id=message_id,

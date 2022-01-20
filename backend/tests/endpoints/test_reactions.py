@@ -79,42 +79,37 @@ fake_message_data = {
             "count": 2,
             "emoji": "lol",
             "name": "lol",
-            "reactedUsersId": [
-                "61696f5ac4133ddaa309dcfe",
-                "619bab3b1a5f54782939d400"
-            ]
+            "reactedUsersId": ["61696f5ac4133ddaa309dcfe", "619bab3b1a5f54782939d400"],
         },
         {
             "count": 1,
             "emoji": "smile",
             "name": "smile",
-            "reactedUsersId": [
-                "619bab3b1a5f54782939d400"
-            ]
+            "reactedUsersId": ["619bab3b1a5f54782939d400"],
         },
     ],
     "files": [],
     "org_id": "619ba4671a5f54782939d384",
     "richUiData": {
-      "blocks": [
-        {
-          "data": {},
-          "depth": 0,
-          "entityRanges": [],
-          "inlineStyleRanges": [],
-          "key": "random",
-          "text": "Helloooo",
-          "type": "unstyled"
-        }
-      ],
-      "entityMap": {}
+        "blocks": [
+            {
+                "data": {},
+                "depth": 0,
+                "entityRanges": [],
+                "inlineStyleRanges": [],
+                "key": "random",
+                "text": "Helloooo",
+                "type": "unstyled",
+            }
+        ],
+        "entityMap": {},
     },
     "room_id": "61e6855e65934b58b8e5d1df",
     "saved_by": [],
     "sender_id": "619bab3b1a5f54782939d400",
     "threads": [],
-    "timestamp": 0
-  }
+    "timestamp": 0,
+}
 
 
 # {
@@ -143,6 +138,7 @@ fake_message_data = {
 #   }
 # }
 
+
 @pytest.mark.asyncio
 @mock.patch.object(DataStorage, "__init__", lambda x, y: None)
 async def test_add_reaction_when_reaction_does_not_exist_successful(
@@ -159,18 +155,13 @@ async def test_add_reaction_when_reaction_does_not_exist_successful(
     # fake_message_data["emojis"] = reactions
 
     add_reaction_payload = {
-        'name': 'lol',
-        'count': 1,
-        'emoji': 'lol',
-        'reactedUsersId': [
-            "619ba4671a5f54782939d385"
-            ]
+        "name": "lol",
+        "count": 1,
+        "emoji": "lol",
+        "reactedUsersId": ["619ba4671a5f54782939d385"],
     }
 
-    update_response = {
-        "status" : 200,
-        "message" : "reaction added"
-    }
+    update_response = {"status": 200, "message": "reaction added"}
     success_response = {
         "status": "success",
         "message": "reaction added",
@@ -178,10 +169,8 @@ async def test_add_reaction_when_reaction_does_not_exist_successful(
             "name": "lol",
             "count": 1,
             "emoji": "lol",
-            "reactedUsersId": [
-            "619ba4671a5f54782939d385"
-            ]
-        }
+            "reactedUsersId": ["619ba4671a5f54782939d385"],
+        },
     }
     centrifugo_response = {"status_code": 200}
 
@@ -211,21 +200,16 @@ async def test_add_reaction_when_reaction_exists_successful(
     # fake_message_data["emojis"] = reactions
 
     add_reaction_payload = {
-        'name': 'lol',
-        'count': 1,
-        'emoji': 'lol',
-        'reactedUsersId': [
-            "619ba4671a5f54782939d385"
-            ]
+        "name": "lol",
+        "count": 1,
+        "emoji": "lol",
+        "reactedUsersId": ["619ba4671a5f54782939d385"],
     }
 
-    update_response = {
-        "status" : 200,
-        "message" : "reaction added"
-    }
+    update_response = {"status": 200, "message": "reaction added"}
     # new_fake_message_data["emojis"] = fake_message_data["emojis"] + [add_reaction_payload]
     reactions = fake_message_data["emojis"].append(add_reaction_payload)
-    
+
     success_response = {
         "status": "success",
         "message": "reaction added",
@@ -293,13 +277,6 @@ async def test_add_reaction_when_reaction_exists_successful(
 #     # response = client.put(url=add_reaction_url, json=add_reaction_payload)
 #     assert response.status_code == 422
 #     assert response.json() == {"detail": "Invalid room member" }
-
-
-
-
-
-
-
 
 
 # @pytest.mark.asyncio
@@ -401,9 +378,6 @@ async def test_add_reaction_when_reaction_exists_successful(
 #     response = client.put(url=remove_reaction_url)
 #     assert response.status_code == 422
 #     assert response.json() == {"detail": "Member hasn't reacted with this emoji"}
-
-
-
 
 
 # @pytest.mark.asyncio
