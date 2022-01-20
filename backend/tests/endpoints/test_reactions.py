@@ -197,10 +197,10 @@
 
 # @pytest.mark.asyncio
 # @mock.patch.object(DataStorage, "__init__", lambda x, y: None)
-# async def test_remove_reaction_no_reaction_exists(
+# async def test_add_reaction_when_reaction_exists_successful(
 #     mock_dataStorage_read, mock_dataStorage_update, mock_centrifugo
 # ):
-#     """Remove reaction from message
+#     """Add reaction to message
 #     Args:
 #         mock_dataStorage_read (AsyncMock): Asynchronous external api call
 #         mock_dataStorage_update (AsyncMock): Asynchronous external api call
@@ -208,9 +208,9 @@
 #     """
 #     db = DataStorage("619ba4671a5f54782939d384")
 #     db.plugin_id = "34453"
-#     fake_message_data["emojis"] = []
+#     # fake_message_data["emojis"] = reactions
 
-#     remove_reaction_payload = {
+#     add_reaction_payload = {
 #         'name': 'lol',
 #         'count': 1,
 #         'emoji': 'lol',
@@ -220,8 +220,27 @@
 #     }
 
 #     update_response = {
-#         "status" : 404,
-#         "message" : "No reactions found"
+#         "status" : 200,
+#         "message" : "reaction added"
+#     }
+#     # new_fake_message_data["emojis"] = fake_message_data["emojis"] + [add_reaction_payload]
+#     reactions = fake_message_data["emojis"].append(add_reaction_payload)
+    
+#     success_response = {
+#         "status": "success",
+#         "message": "reaction added",
+#         "data": reactions
+#         # "data": new_fake_message_data["emojis"]
+#         # "data": fake_message_data["emojis"][-1]
+#         # "data": {
+#         #     "name": "lol",
+#         #     "count": 2,
+#         #     "emoji": "lol",
+#         #     "reactedUsersId": [
+#         #     "619ba4671a5f54782939d385",
+#         #     "619bab3b1a5f54782939d400"
+#         #     ]
+#         # }
 #     }
 #     centrifugo_response = {"status_code": 200}
 
@@ -230,111 +249,161 @@
 #     mock_dataStorage_update.return_value = update_response
 #     mock_centrifugo.return_value = centrifugo_response
 
-#     response = client.put(url=remove_reaction_url, json=remove_reaction_payload)
-#     assert response.status_code == 404
+#     response = client.put(url=reaction_url, json=add_reaction_payload)
+#     assert response.status_code == 200
+#     assert response.json() == success_response
 
 
-# @pytest.mark.asyncio
-# @mock.patch.object(DataStorage, "__init__", lambda x, y: None)
-# async def test_remove_reaction_when_user_has_not_reacted_with_emoji(
-#     mock_dataStorage_read, mock_dataStorage_update, mock_centrifugo
-# ):
-#     """Remove reaction from message
-#     Args:
-#         mock_dataStorage_read (AsyncMock): Asynchronous external api call
-#         mock_dataStorage_update (AsyncMock): Asynchronous external api call
-#         mock_centrifugo (AsyncMock): Asynchronous external api call
-#     """
-#     db = DataStorage("619ba4671a5f54782939d384")
-#     db.plugin_id = "34453"
-#     fake_message_data["emojis"] == [
-#         {
-#             "count": 1,
-#             "emoji": "smile",
-#             "name": "smile",
-#             "reactedUsersId": [
-#                 "619bab3b1a5f54782939d400"
-#             ]
-#         },
-#     ]
+# # @pytest.mark.asyncio
+# # @mock.patch.object(DataStorage, "__init__", lambda x, y: None)
+# # async def test_invalid_member_id(
+# #     mock_dataStorage_read
+# # ):
+# #     """Remove reaction from message
+# #     Args:
+# #         mock_dataStorage_read (AsyncMock): Asynchronous external api call
+# #         mock_dataStorage_update (AsyncMock): Asynchronous external api call
+# #         mock_centrifugo (AsyncMock): Asynchronous external api call
+# #     """
+# #     db = DataStorage("619ba4671a5f54782939d384")
+# #     db.plugin_id = "34453"
 
-#     remove_reaction_payload = {
-#         "count": 1,
-#         "emoji": "smile",
-#         "name": "smile",
-#         'reactedUsersId': [
-#             "619ba4671a5f54782939d385"
-#             ]
-#     }
+# #     members = {
+# #         "61696f5ac4133ddaa309dcfe",
+# #         "6169704bc4133ddaa309dd07",
+# #         "619baa5c1a5f54782939d386",
+# #         "619bab3b1a5f54782939d400",
+# #         "619ba4671a5f54782939d385"
+# #     }
 
-#     remove_reaction_payload["reactedUsersId"] = ["619ba4671a5f54782939d385"]
-#     read_response = {
-#         "status_code" : 409,
-#         "message" : "Member hasn't reacted with this emoji"
-#     }
-#     # success_response = {
-#     #     "status": "success",
-#     #     "message": "reaction removed",
-#     #     "data": {
-#     #         "name": "smile",
-#     #         "count": 0,
-#     #         "emoji": "smile",
-#     #         "reactedUsersId": []
-#     #     }
-#     # }
-#     # centrifugo_response = {"status_code": 200}
+# #     add_reaction_payload = {
+# #         'name': 'lol',
+# #         'count': 1,
+# #         'emoji': 'lol',
+# #         'reactedUsersId': [
+# #             "619ba4671a585f547839d293"
+# #             ]
+# #     }
+# #     add_reaction_payload["reactedUsersId"] = ["619ba4671a585f547839d293"]
+# #     read_response = {"status_code": 401, "message": "Invalid room member"}
 
-#     mock_dataStorage_read.return_value = fake_message_data
-#     mock_dataStorage_read.return_value == read_response
-#     # mock_dataStorage_read.return_value = fake_room_data
-#     # mock_dataStorage_update.return_value == update_response
-#     # mock_centrifugo.return_value = centrifugo_response
-
-#     # response = client.put(url=remove_reaction_url, json=remove_reaction_payload)
-#     response = client.put(url=remove_reaction_url)
-#     assert response.status_code == 422
-#     assert response.json() == {"detail": "Member hasn't reacted with this emoji"}
+# #     mock_dataStorage_read.return_value == members
+# #     mock_dataStorage_read.return_value == read_response
+# #     response = client.put(url=add_reaction_url)
+# #     # response = client.put(url=add_reaction_url, json=add_reaction_payload)
+# #     assert response.status_code == 422
+# #     assert response.json() == {"detail": "Invalid room member" }
 
 
-# @pytest.mark.asyncio
-# @mock.patch.object(DataStorage, "__init__", lambda x, y: None)
-# async def test_invalid_member_id(
-#     mock_dataStorage_read
-# ):
-#     """Remove reaction from message
-#     Args:
-#         mock_dataStorage_read (AsyncMock): Asynchronous external api call
-#         mock_dataStorage_update (AsyncMock): Asynchronous external api call
-#         mock_centrifugo (AsyncMock): Asynchronous external api call
-#     """
-#     db = DataStorage("619ba4671a5f54782939d384")
-#     db.plugin_id = "34453"
 
-#     members = {
-#         "61696f5ac4133ddaa309dcfe",
-#         "6169704bc4133ddaa309dd07",
-#         "619baa5c1a5f54782939d386",
-#         "619bab3b1a5f54782939d400",
-#         "619ba4671a5f54782939d385"
-#     }
 
-#     add_reaction_payload = {
-#         'name': 'lol',
-#         'count': 1,
-#         'emoji': 'lol',
-#         'reactedUsersId': [
-#             "619ba4671a585f547839d293"
-#             ]
-#     }
-#     add_reaction_payload["reactedUsersId"] = ["619ba4671a585f547839d293"]
-#     read_response = {"status_code": 401, "message": "Invalid room member"}
 
-#     mock_dataStorage_read.return_value == members
-#     mock_dataStorage_read.return_value == read_response
-#     response = client.put(url=add_reaction_url)
-#     # response = client.put(url=add_reaction_url, json=add_reaction_payload)
-#     assert response.status_code == 422
-#     assert response.json() == {"detail": "Invalid room member" }
+
+
+
+
+# # @pytest.mark.asyncio
+# # @mock.patch.object(DataStorage, "__init__", lambda x, y: None)
+# # async def test_remove_reaction_no_reaction_exists(
+# #     mock_dataStorage_read, mock_dataStorage_update, mock_centrifugo
+# # ):
+# #     """Remove reaction from message
+# #     Args:
+# #         mock_dataStorage_read (AsyncMock): Asynchronous external api call
+# #         mock_dataStorage_update (AsyncMock): Asynchronous external api call
+# #         mock_centrifugo (AsyncMock): Asynchronous external api call
+# #     """
+# #     db = DataStorage("619ba4671a5f54782939d384")
+# #     db.plugin_id = "34453"
+# #     fake_message_data["emojis"] = []
+
+# #     remove_reaction_payload = {
+# #         'name': 'lol',
+# #         'count': 1,
+# #         'emoji': 'lol',
+# #         'reactedUsersId': [
+# #             "619ba4671a5f54782939d385"
+# #             ]
+# #     }
+
+# #     update_response = {
+# #         "status" : 404,
+# #         "message" : "No reactions found"
+# #     }
+# #     centrifugo_response = {"status_code": 200}
+
+# #     mock_dataStorage_read.return_value = fake_message_data
+# #     mock_dataStorage_read.return_value = fake_room_data
+# #     mock_dataStorage_update.return_value = update_response
+# #     mock_centrifugo.return_value = centrifugo_response
+
+# #     response = client.put(url=remove_reaction_url, json=remove_reaction_payload)
+# #     assert response.status_code == 404
+
+
+# # @pytest.mark.asyncio
+# # @mock.patch.object(DataStorage, "__init__", lambda x, y: None)
+# # async def test_remove_reaction_when_user_has_not_reacted_with_emoji(
+# #     mock_dataStorage_read, mock_dataStorage_update, mock_centrifugo
+# # ):
+# #     """Remove reaction from message
+# #     Args:
+# #         mock_dataStorage_read (AsyncMock): Asynchronous external api call
+# #         mock_dataStorage_update (AsyncMock): Asynchronous external api call
+# #         mock_centrifugo (AsyncMock): Asynchronous external api call
+# #     """
+# #     db = DataStorage("619ba4671a5f54782939d384")
+# #     db.plugin_id = "34453"
+# #     fake_message_data["emojis"] == [
+# #         {
+# #             "count": 1,
+# #             "emoji": "smile",
+# #             "name": "smile",
+# #             "reactedUsersId": [
+# #                 "619bab3b1a5f54782939d400"
+# #             ]
+# #         },
+# #     ]
+
+# #     remove_reaction_payload = {
+# #         "count": 1,
+# #         "emoji": "smile",
+# #         "name": "smile",
+# #         'reactedUsersId': [
+# #             "619ba4671a5f54782939d385"
+# #             ]
+# #     }
+
+# #     remove_reaction_payload["reactedUsersId"] = ["619ba4671a5f54782939d385"]
+# #     read_response = {
+# #         "status_code" : 409,
+# #         "message" : "Member hasn't reacted with this emoji"
+# #     }
+# #     # success_response = {
+# #     #     "status": "success",
+# #     #     "message": "reaction removed",
+# #     #     "data": {
+# #     #         "name": "smile",
+# #     #         "count": 0,
+# #     #         "emoji": "smile",
+# #     #         "reactedUsersId": []
+# #     #     }
+# #     # }
+# #     # centrifugo_response = {"status_code": 200}
+
+# #     mock_dataStorage_read.return_value = fake_message_data
+# #     mock_dataStorage_read.return_value == read_response
+# #     # mock_dataStorage_read.return_value = fake_room_data
+# #     # mock_dataStorage_update.return_value == update_response
+# #     # mock_centrifugo.return_value = centrifugo_response
+
+# #     # response = client.put(url=remove_reaction_url, json=remove_reaction_payload)
+# #     response = client.put(url=remove_reaction_url)
+# #     assert response.status_code == 422
+# #     assert response.json() == {"detail": "Member hasn't reacted with this emoji"}
+
+
+
 
 
 # # @pytest.mark.asyncio
