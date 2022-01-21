@@ -124,6 +124,7 @@ async def update_message(
     org_id: str,
     room_id: str,
     message_id: str,
+    # sender_id: str,
     background_tasks: BackgroundTasks,
 ):
     """
@@ -138,19 +139,19 @@ async def update_message(
         {
         "emojis": [],
         "richUiData": {
-                "blocks": [
-                    {
-                    "data": {},
-                    "depth": 0,
-                    "entityRanges": [],
-                    "inlineStyleRanges": [],
-                    "key": "eljik",
-                    "text": "HI, I'm mark",
-                    "type": "unstyled"
-                    }
-                ],
-                "entityMap": {}
-                },
+            "blocks": [
+                {
+                "data": {},
+                "depth": 0,
+                "entityRanges": [],
+                "inlineStyleRanges": [],
+                "key": "eljik",
+                "text": "HI, I'm mark",
+                "type": "unstyled"
+                }
+            ],
+            "entityMap": {}
+            },
         "sender_id": "619ba4671a5f54782939d385",
         "timestamp": 0
         }
@@ -158,43 +159,6 @@ async def update_message(
     Returns:
         HTTP_200_OK {Message edited}:
         A dict containing data about the message that was edited.
-
-            {
-                "_id": "61c3aa9478fb01b18fac1465",
-                "created_at": "2021-12-22 22:38:33.075643",
-                "edited": true,
-                "emojis": [
-                {
-                    "count": 1,
-                    "emoji": "👹",
-                    "name": "frown",
-                    "reactedUsersId": [
-                    "619ba4671a5f54782939d385"
-                    ]
-                }
-                ],
-                "files": [],
-                "org_id": "619ba4671a5f54782939d384",
-                "richUiData": {
-                "blocks": [
-                    {
-                    "data": {},
-                    "depth": 0,
-                    "entityRanges": [],
-                    "inlineStyleRanges": [],
-                    "key": "eljik",
-                    "text": "HI, I'm mark.. new here",
-                    "type": "unstyled"
-                    }
-                ],
-                "entityMap": {}
-                },
-                "room_id": "619e28c31a5f54782939d59a",
-                "saved_by": [],
-                "sender_id": "619ba4671a5f54782939d385",
-                "text": "string",
-                "threads": []
-            }
 
     Raises:
         HTTPException [401]: You are not authorized to edit this message
@@ -215,12 +179,12 @@ async def update_message(
             detail="You are not authorized to edit this message",
         )
 
+    payload["edited"] = True
     message.update(payload)
-    message["edited"] = True
     edited_message = await DB.update(
-        MESSAGE_COLLECTION, document_id=message_id, data=message
+        MESSAGE_COLLECTION, document_id=message_id, data=payload
     )
-
+    # message.update(payload)
     if edited_message and edited_message.get("status_code") is None:
         # Publish to centrifugo in the background.
         background_tasks.add_task(
@@ -234,6 +198,96 @@ async def update_message(
         status_code=status.HTTP_424_FAILED_DEPENDENCY,
         detail={"message not edited": edited_message},
     )
+
+
+
+# @router.put(
+#     "/org/{org_id}/rooms/{room_id}/messages/{message_id}",
+#     response_model=ResponseModel,
+#     status_code=status.HTTP_200_OK,
+#     responses={
+#         401: {"description": "you are not authorized to edit this message"},
+#         404: {"description": "message not found"},
+#         424: {"description": "message not edited"},
+#     },
+# )
+# async def update_message(
+#     request: MessageRequest,
+#     org_id: str,
+#     room_id: str,
+#     message_id: str,
+#     sender_id: str,
+#     background_tasks: BackgroundTasks,
+# ):
+#     """
+#     Update a message
+#     Args:
+#         request: Request object
+#         org_id: A unique identifier of the organization.
+#         room_id: A unique identifier of the room.
+#         message_id: A unique identifier of the message that is being edited.
+#         background_tasks: A daemon thread for publishing to centrifugo
+#     Returns:
+#         HTTP_200_OK {Message edited}:
+#         A dict containing data about the message that was edited.
+        
+#         {
+#             "emojis": [],
+#             "richUiData": {
+#                 "blocks": [
+#                     {
+#                         "data": {},
+#                         "depth": 0,
+#                         "entityRanges": [],
+#                         "inlineStyleRanges": [],
+#                         "key": "eljik",
+#                         "text": "HI, I'm mark",
+#                         "type": "unstyled"
+#                     }
+#                 ],
+#                 "entityMap": {}
+#             },
+#             "sender_id": "619ba4671a5f54782939d385",
+#             "timestamp": 0
+#         }
+            
+#     Raises:
+#         HTTPException [401]: You are not authorized to edit this message
+#         HTTPException [404]: Message not found
+#         HTTPException [424]: Message not edited
+#     """
+#     DB = DataStorage(org_id)
+#     message = await get_message(org_id, room_id, message_id)
+#     if not message:
+#         raise HTTPException(
+#             status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
+#         )
+
+#     payload = request.dict(exclude_unset=True)
+#     if message["sender_id"] != sender_id:
+#         raise HTTPException(
+#             status_code=status.HTTP_401_UNAUTHORIZED,
+#             detail="You are not authorized to edit this message",
+#         )
+
+#     message["richUiData"] == payload["richUiData"]
+#     payload["edited"] = True
+#     edited_message = await DB.update(
+#         MESSAGE_COLLECTION, document_id=message_id, data=message
+#     )
+
+#     if edited_message and edited_message.get("status_code") is None:
+#         background_tasks.add_task(
+#             centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, message
+#         )  # publish to centrifugo in the background
+#         return JSONResponse(
+#             content=ResponseModel.success(data=message, message="Message edited"),
+#             status_code=status.HTTP_200_OK,
+#         )
+#     raise HTTPException(
+#         status_code=status.HTTP_424_FAILED_DEPENDENCY,
+#         detail={"message not edited": edited_message},
+#     )
 
 
 @router.get(
@@ -524,7 +578,7 @@ async def reactions(
             centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, new_reaction
         )
         return JSONResponse(
-            content=ResponseModel.success(data=new_reaction, message="reaction added"),
+            content=ResponseModel.success(data=new_reaction, message="New reaction added successfully"),
             status_code=status.HTTP_200_OK,
         )
 
@@ -552,14 +606,14 @@ async def reactions(
                 if added and added.get("status_code") is not None:
                     raise HTTPException(
                         status_code=status.HTTP_424_FAILED_DEPENDENCY,
-                        detail="Failed to add reaction",
+                        detail="Failed to add member's reaction",
                     )
                 # publish to centrifugo in the background
                 background_tasks.add_task(
                     centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, emoji
                 )
                 return JSONResponse(
-                    content=ResponseModel.success(data=emoji, message="reaction added"),
+                    content=ResponseModel.success(data=emoji, message="new member reacted with the emoji"),
                     status_code=status.HTTP_200_OK,
                 )
 
@@ -568,6 +622,7 @@ async def reactions(
             # emoji["count"] -= 1
             emoji.get("reactedUsersId").remove(new_reaction.get("reactedUsersId")[0])
             emoji["count"] -= 1
+            # emoji["reactedUsersId"] = list(set(emoji.get("reactedUsersId")))
 
             if emoji.get("count") != 0:
                 # if emoji["count"] != 0:  # if emoji count is not 0
@@ -579,7 +634,7 @@ async def reactions(
                 if updated and updated.get("status_code") is not None:
                     raise HTTPException(
                         status_code=status.HTTP_424_FAILED_DEPENDENCY,
-                        detail="Failed to remove user's reaction",
+                        detail="Failed to remove member's reaction",
                     )
                 # publish to centrifugo in the background
                 background_tasks.add_task(
@@ -587,7 +642,7 @@ async def reactions(
                 )
                 return JSONResponse(
                     content=ResponseModel.success(
-                        data=emoji, message="user's reaction removed"
+                        data=emoji, message="member's reaction removed successfully"
                     ),
                     status_code=status.HTTP_200_OK,
                 )
@@ -606,7 +661,7 @@ async def reactions(
                 centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, removed
             )
             return JSONResponse(
-                content=ResponseModel.success(data=emoji, message="reaction removed"),
+                content=ResponseModel.success(data=None, message="reaction removed successfully"),
                 status_code=status.HTTP_200_OK,
             )
 
@@ -618,14 +673,14 @@ async def reactions(
     if new and new.get("status_code") is not None:
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
-            detail="Failed to add reaction",
+            detail="Failed to add new reaction",
         )
     # publish to centrifugo in the background
     background_tasks.add_task(
         centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, new_reaction
     )
     return JSONResponse(
-        content=ResponseModel.success(data=new_reaction, message="reaction added"),
+        content=ResponseModel.success(data=new_reaction, message="another  reaction added successfully"),
         status_code=status.HTTP_200_OK,
     )
 

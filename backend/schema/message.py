@@ -132,6 +132,7 @@ class Thread(MessageRequest):
 
     room_id: str
     org_id: str
+    # sender_id: str
     message_id: str = Field(None, alias="_id")
     edited: bool = False
 
