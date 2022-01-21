@@ -180,11 +180,12 @@ async def update_message(
         )
 
     payload["edited"] = True
-    message.update(payload)
     edited_message = await DB.update(
         MESSAGE_COLLECTION, document_id=message_id, data=payload
     )
-    # message.update(payload)
+
+    message.update(payload)
+
     if edited_message and edited_message.get("status_code") is None:
         # Publish to centrifugo in the background.
         background_tasks.add_task(
