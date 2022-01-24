@@ -44,9 +44,7 @@ def fixture_mock_get_room_members(mocker):
        AsyncMock: An instance of the asyncmock class
     """
     mock_get_room_members = AsyncMock()
-    mocker.patch(
-        "utils.room_utils.DataStorage.read", side_effect=mock_get_room_members
-    )
+    mocker.patch("utils.room_utils.DataStorage.read", side_effect=mock_get_room_members)
     return mock_get_room_members
 
 
@@ -124,7 +122,9 @@ def fixture_mock_get_all_members(mocker):
        AsyncMock: An instance of the asyncmock class
     """
     zc_core_read_data = AsyncMock()
-    mocker.patch("endpoints.rooms.DataStorage.get_all_members", side_effect=zc_core_read_data)
+    mocker.patch(
+        "endpoints.rooms.DataStorage.get_all_members", side_effect=zc_core_read_data
+    )
     return zc_core_read_data
 
 
@@ -156,6 +156,134 @@ def fixture_mock_get_admin_members(mocker):
     zc_core_read_data = AsyncMock()
     mocker.patch("endpoints.rooms.DataStorage.read", side_effect=zc_core_read_data)
     return zc_core_read_data
+
+
+# @pytest.fixture(name="init_fake_room")
+# def fixture_initialize_fake_room_data():
+#     """A fixture that initialises a new fake room data for each test
+#     Returns:
+#         Dict: An room dictionary
+#     """
+#     room_data = {
+#         "room_name": "General",
+#         "room_type": "CHANNEL",
+#         "room_members": {
+#             "61696f5ac4133ddaa309dcfe": {
+#                 "closed": False,
+#                 "role": "admin",
+#                 "starred": False,
+#             },
+#             "6169704bc4133ddaa309dd07": {
+#                 "closed": False,
+#                 "role": "admin",
+#                 "starred": False,
+#             },
+#             "619baa5c1a5f54782939d386": {
+#                 "closed": False,
+#                 "role": "member",
+#                 "starred": False,
+#             },
+#             "619baa5c1a5f54782930d386": {
+#                 "closed": False,
+#                 "role": "member",
+#                 "starred": True,
+#             },
+#         },
+#         "created_at": "2022-01-11 03:18:02.364291",
+#         "description": None,
+#         "topic": "General Information",
+#         "is_private": False,
+#         "is_archived": False,
+#         "id": "23dg67l0eba8adb50ca13a24",
+#         "org_id": "3467sd4671a5f5478df56u911",
+#         "created_by": "619ba4671a5f54782939d385",
+#     }
+#     return room_data
+
+
+@pytest.fixture(name="init_fake_room")
+def fixture_initialize_fake_room_data():
+    """A fixture that initialises a new fake room data for each test
+    Returns:
+        Dict: An room dictionary
+    """
+    return {
+        "room_name": "General",
+        "room_type": "CHANNEL",
+        "room_members": {
+            "61696f5ac4133ddaa309dcfe": {
+                "closed": False,
+                "role": "admin",
+                "starred": False,
+            },
+            "6169704bc4133ddaa309dd07": {
+                "closed": False,
+                "role": "admin",
+                "starred": False,
+            },
+            "619baa5c1a5f54782939d386": {
+                "closed": False,
+                "role": "member",
+                "starred": False,
+            },
+            "619baa5c1a5f54782930d386": {
+                "closed": False,
+                "role": "member",
+                "starred": True,
+            },
+        },
+        "created_at": "2022-01-11 03:18:02.364291",
+        "description": None,
+        "topic": "General Information",
+        "is_private": False,
+        "is_archived": False,
+        "id": "23dg67l0eba8adb50ca13a24",
+        "org_id": "3467sd4671a5f5478df56u911",
+        "created_by": "619ba4671a5f54782939d385",
+    }
+
+
+# @pytest.fixture(name="init_fake_message")
+# def fixture_initialize_fake_message_data():
+#     """A fixture that initialises a new fake message data for each test
+#     Returns:
+#         Dict: An message dictionary
+#     """
+#     return {
+#     "_id": "61e6878165934b58b8e5d1e0",
+#     "created_at": "2022-01-18 09:05:32.479911",
+#     "edited": False,
+#     "emojis": [
+#         {
+#             "count": 1,
+#             "emoji": "smile",
+#             "name": "smile",
+#             "reactedUsersId": ["619bab3b1a5f54782939d400"],
+#         },
+#     ],
+#     "files": [],
+#     "org_id": "619ba4671a5f54782939d384",
+#     "richUiData": {
+#         "blocks": [
+#             {
+#                 "data": {},
+#                 "depth": 0,
+#                 "entityRanges": [],
+#                 "inlineStyleRanges": [],
+#                 "key": "random",
+#                 "text": "Helloooo",
+#                 "type": "unstyled",
+#             }
+#         ],
+#         "entityMap": {},
+#     },
+#     "room_id": "61e6855e65934b58b8e5d1df",
+#     "saved_by": [],
+#     "sender_id": "619bab3b1a5f54782939d400",
+#     "threads": [],
+#     "timestamp": 0,
+# }
+
 
 
 # @pytest.fixture(name="mock_read")
@@ -231,17 +359,17 @@ def fixture_mock_get_admin_members(mocker):
 #     return async_mock_centrifugo
 
 
-@pytest.fixture(name="mock_get_message")
-def fixture_mock_get_message(mocker):
-    """Patch for reading zc core for retrieving a single message
-    Args:
-        mocker (Mock): For patching a third-party api call
-    Returns:
-        AsyncMock: An instance of the asyncmock class
-    """
-    zc_core_read_data = AsyncMock()
-    mocker.patch("endpoints.messages.DataStorage.read", side_effect=zc_core_read_data)
-    return zc_core_read_data
+# @pytest.fixture(name="mock_get_message")
+# def fixture_mock_get_message(mocker):
+#     """Patch for reading zc core for retrieving a single message
+#     Args:
+#         mocker (Mock): For patching a third-party api call
+#     Returns:
+#         AsyncMock: An instance of the asyncmock class
+#     """
+#     zc_core_read_data = AsyncMock()
+#     mocker.patch("endpoints.messages.DataStorage.read", side_effect=zc_core_read_data)
+#     return zc_core_read_data
 
 
 # @pytest.fixture(name="mock_update_message")
@@ -271,5 +399,3 @@ def fixture_mock_get_message(mocker):
 #     core_read_mock = AsyncMock()
 #     mocker.patch("utils.room_utils.DataStorage.read", side_effect=core_read_mock)
 #     return core_read_mock
-
-

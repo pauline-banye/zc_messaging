@@ -1,16 +1,17 @@
 import json
-from http.client import responses
+# from http.client import responses
 from typing import Dict, Optional
 
-from fastapi import (APIRouter, BackgroundTasks, Body, HTTPException, Query,
-                     Request, status)
+from fastapi import (APIRouter, BackgroundTasks, Body,  # , Query,
+                     HTTPException, status)
+# Request)
 from fastapi.responses import JSONResponse
 from schema.response import ResponseModel
 from schema.room import Role, Room, RoomMember, RoomRequest, RoomType
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
-from utils.room_utils import (ROOM_COLLECTION, get_org_rooms, get_room,
-                              get_room_members, remove_room_member)
+from utils.room_utils import ROOM_COLLECTION  # get_room_members )
+from utils.room_utils import get_org_rooms, get_room, remove_room_member
 from utils.sidebar import sidebar
 
 router = APIRouter()
@@ -134,7 +135,8 @@ async def remove_member(
             detail="user not a member of the room",
         )
 
-    if admin_id not in room_data["room_members"]:
+    # if admin_id not in room_data["room_members"]:
+    if admin_id is not None and admin_id not in room_data["room_members"]:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="admin id specified not a member of the room",
