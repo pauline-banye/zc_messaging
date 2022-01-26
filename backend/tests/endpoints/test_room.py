@@ -1,41 +1,41 @@
-from unittest import mock
+# from unittest import mock
 
-import pytest
-from fastapi.testclient import TestClient
-from main import app
-from utils.db import DataStorage
+# import pytest
+# from fastapi.testclient import TestClient
+# from main import app
+# from utils.db import DataStorage
 
-client = TestClient(app)
+# client = TestClient(app)
 
-# join_room_test_url = (
+# # join_room_test_url = (
+# #     "api/v1/org/3467sd4671a5f5478df56u911/rooms/23dg67l0eba8adb50ca13a24/"
+# #     + "members/619baa5939d386c1a5f54782"
+# # )
+
+# leave_room_url = (
 #     "api/v1/org/3467sd4671a5f5478df56u911/rooms/23dg67l0eba8adb50ca13a24/"
-#     + "members/619baa5939d386c1a5f54782"
+#     + "members/619baa5c1a5f54782939d386"
 # )
 
-leave_room_url = (
-    "api/v1/org/3467sd4671a5f5478df56u911/rooms/23dg67l0eba8adb50ca13a24/"
-    + "members/619baa5c1a5f54782939d386"
-)
+# remove_room_member_url = (
+#     "api/v1/org/3467sd4671a5f5478df56u911/rooms/23dg67l0eba8adb50ca13a24/"
+#     + "members/61696f5ac4133ddaa309dcfe?admin_id=6169704bc4133ddaa309dd07"
+# )
 
-remove_room_member_url = (
-    "api/v1/org/3467sd4671a5f5478df56u911/rooms/23dg67l0eba8adb50ca13a24/"
-    + "members/61696f5ac4133ddaa309dcfe?admin_id=6169704bc4133ddaa309dd07"
-)
+# fake_member_leave_room_url = (
+#     "api/v1/org/3467sd4671a5f5478df56u911/rooms/23dg67l0eba8adb50ca13a24/"
+#     + "members/1696f5ac4133ddaa309dcfe?admin_id=6169704bc4133ddaa309dd07"
+# )
 
-fake_member_leave_room_url = (
-    "api/v1/org/3467sd4671a5f5478df56u911/rooms/23dg67l0eba8adb50ca13a24/"
-    + "members/1696f5ac4133ddaa309dcfe?admin_id=6169704bc4133ddaa309dd07"
-)
+# fake_member_remove_room_member_url = (
+#     "api/v1/org/3467sd4671a5f5478df56u911/rooms/23dg67l0eba8adb50ca13a24/"
+#     + "members/1696f5ac4133ddaa309dcfe"
+# )
 
-fake_member_remove_room_member_url = (
-    "api/v1/org/3467sd4671a5f5478df56u911/rooms/23dg67l0eba8adb50ca13a24/"
-    + "members/1696f5ac4133ddaa309dcfe"
-)
-
-non_admin_remove_room_member_url = (
-    "api/v1/org/3467sd4671a5f5478df56u911/rooms/23dg67l0eba8adb50ca13a24/"
-    + "members/61696f5ac4133ddaa309dcfe?admin_id=619baa5c1a5f54782939d386"
-)
+# non_admin_remove_room_member_url = (
+#     "api/v1/org/3467sd4671a5f5478df56u911/rooms/23dg67l0eba8adb50ca13a24/"
+#     + "members/61696f5ac4133ddaa309dcfe?admin_id=619baa5c1a5f54782939d386"
+# )
 
 
 # join_room_test_payload = {

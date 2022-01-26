@@ -399,3 +399,35 @@ def fixture_initialize_fake_room_data():
 #     core_read_mock = AsyncMock()
 #     mocker.patch("utils.room_utils.DataStorage.read", side_effect=core_read_mock)
 #     return core_read_mock
+
+
+
+# @pytest.fixture(name="mock_get_room_members")
+# def fixture_mock_get_room_members(mocker):
+#     """Patch for getting room members.
+
+#     Args:
+#        mocker (Mock): For patching a third-party api call
+
+#     Returns:
+#        AsyncMock: An instance of the asyncmock class
+#     """
+#     mock_get_room_members = AsyncMock()
+#     mocker.patch("utils.room_utils.DataStorage.read", side_effect=mock_get_room_members)
+#     return mock_get_room_members
+
+
+@pytest.fixture(name="mock_get_message")
+def fixture_mock_get_message(mocker):
+    """Patch for reading data from zc core.
+
+    Args:
+       mocker (Mock): For patching a third-party api call
+
+    Returns:
+       AsyncMock: An instance of the asyncmock class
+    """
+    core_read_mock = AsyncMock()
+    # mocker.patch("utils.message_utils.DataStorage.read", side_effect=core_read_mock)
+    mocker.patch("endpoints.messages.DataStorage.read", side_effect=core_read_mock)
+    return core_read_mock 
