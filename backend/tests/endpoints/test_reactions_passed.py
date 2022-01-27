@@ -516,20 +516,3 @@ async def test_remove_reaction_successful_when_reaction_count_is_one(
     response = client.put(url=remove_reaction_url, json=reaction_payload)
     assert response.status_code == 200
     assert response.json() == success_response
-
-
-# #conftest
-
-# # @pytest.fixture(name="mock_get_room")
-# # def fixture_mock_get_room(mocker):
-# #     """Patch for getting room members.
-
-# #     Args:
-# #        mocker (Mock): For patching a third-party api call
-
-# #     Returns:
-# #        AsyncMock: An instance of the asyncmock class
-# #     """
-# #     mock_get_room = AsyncMock()
-# #     mocker.patch("utils.room_utils.DataStorage.read", side_effect=mock_get_room)
-# #     return mock_get_room
