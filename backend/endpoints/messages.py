@@ -1169,17 +1169,14 @@ async def delete_message(
 #     )
 
 
-
-
-
-@router.put( # ADD REACTION ONLY
+@router.put(  # ADD REACTION ONLY
     "/org/{org_id}/rooms/{room_id}/messages/{message_id}/reaction/add",
     response_model=ResponseModel,
     status_code=status.HTTP_200_OK,
     responses={
         401: {"description": "Invalid room member"},
         404: {"description": "Message not found"},
-        409: {"description": "Member already reacted with this emoji"},
+        409: {"description": "Duplicate reaction"},
         424: {
             "description": "Failed to retrieve room members || Failed to add reaction"
         },
@@ -1225,7 +1222,7 @@ async def add_reactions(
     Raises:
         HTTPException [401]: Invalid room member
         HTTPException [404]: Message not found || Room not found
-        HTTPException [409]: Member already reacted with this emoji
+        HTTPException [409]: Duplicate reaction
         HTTPException [424]: Failed to add reaction
     """
     DB = DataStorage(org_id)
@@ -1236,28 +1233,31 @@ async def add_reactions(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Message not found",
         )
-    print ("message", message)
+    print("message", message)
     reactions = message.get("emojis")
+    # reactions = message["emojis"]
 
     room = await get_room(org_id, room_id)
     if not room:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Room not found"
         )
-    print ("room", room)
+    print("room", room)
     members = room.get("room_members", {})
-    print ("room members", members)
-    
+    print("room members", members)
+
     new_reaction = request.dict()
-    if new_reaction["reactedUsersId"][0] not in list(members):  # check if user is in list of room members
+    if new_reaction["reactedUsersId"][0] not in list(
+        members
+    ):  # check if user is in list of room members
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid room member",
-        )  
+        )
 
-    print ("list of room members", list(members))
-    print ("new reaction user id", new_reaction["reactedUsersId"])
-    
+    print("list of room members", list(members))
+    print("new reaction user id", new_reaction["reactedUsersId"])
+
     # if no reactions exist for the message
     if not reactions:
         reactions = [new_reaction]
@@ -1274,7 +1274,9 @@ async def add_reactions(
             centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, new_reaction
         )
         return JSONResponse(
-            content=ResponseModel.success(data=new_reaction, message="Reaction added successfully"),
+            content=ResponseModel.success(
+                data=new_reaction, message="Reaction added successfully"
+            ),
             status_code=status.HTTP_200_OK,
         )
 
@@ -1304,13 +1306,15 @@ async def add_reactions(
                     centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, emoji
                 )
                 return JSONResponse(
-                    content=ResponseModel.success(data=emoji, message="Reaction added successfully"),
+                    content=ResponseModel.success(
+                        data=emoji, message="Reaction added successfully"
+                    ),
                     status_code=status.HTTP_200_OK,
                 )
             # if user has reacted with the emoji
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="Member already reacted with this emoji",
+                detail="Duplicate reaction",
             )
 
     # if emoji is not in reactions
@@ -1328,7 +1332,9 @@ async def add_reactions(
         centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, new_reaction
     )
     return JSONResponse(
-        content=ResponseModel.success(data=new_reaction, message="Reaction added successfully"),
+        content=ResponseModel.success(
+            data=new_reaction, message="Reaction added successfully"
+        ),
         status_code=status.HTTP_200_OK,
     )
 
@@ -1395,7 +1401,7 @@ async def message_reactions(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Message not found",
         )
-    print ("message", message)
+    print("message", message)
     reactions = message.get("emojis")
 
     room = await get_room(org_id, room_id)
@@ -1403,20 +1409,22 @@ async def message_reactions(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Room not found"
         )
-    print ("room", room)
+    print("room", room)
     members = room.get("room_members", {})
-    print ("room members", members)
-    
+    print("room members", members)
+
     new_reaction = request.dict()
-    if new_reaction["reactedUsersId"][0] not in list(members):  # check if user is in list of room members
+    if new_reaction["reactedUsersId"][0] not in list(
+        members
+    ):  # check if user is in list of room members
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid room member",
-        )  
+        )
 
-    print ("list of room members", list(members))
-    print ("new reaction user id", new_reaction["reactedUsersId"])
-    
+    print("list of room members", list(members))
+    print("new reaction user id", new_reaction["reactedUsersId"])
+
     # if no reactions exist for the message
     if not reactions:
         reactions = [new_reaction]
@@ -1433,7 +1441,9 @@ async def message_reactions(
             centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, new_reaction
         )
         return JSONResponse(
-            content=ResponseModel.success(data=new_reaction, message="Reaction added successfully"),
+            content=ResponseModel.success(
+                data=new_reaction, message="Reaction added successfully"
+            ),
             status_code=status.HTTP_200_OK,
         )
 
@@ -1596,7 +1606,7 @@ async def remove_reactions(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Message not found",
         )
-    print ("message", message)
+    print("message", message)
     reaction = message.get("emojis")
 
     room = await get_room(org_id, room_id)
@@ -1604,19 +1614,21 @@ async def remove_reactions(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Room not found"
         )
-    print ("room", room)
+    print("room", room)
     members = room.get("room_members", {})
-    print ("room members", members)
-    
+    print("room members", members)
+
     new_reaction = request.dict()
-    if new_reaction["reactedUsersId"][0] not in list(members):  # check if user is in list of room members
+    if new_reaction["reactedUsersId"][0] not in list(
+        members
+    ):  # check if user is in list of room members
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid room member",
-        )  
+        )
 
-    print ("list of room members", list(members))
-    print ("new reaction user id", new_reaction["reactedUsersId"])
+    print("list of room members", list(members))
+    print("new reaction user id", new_reaction["reactedUsersId"])
 
     # if no reactions exist for the message
     if not reaction:
@@ -1637,7 +1649,7 @@ async def remove_reactions(
                 )
             emoji["reactedUsersId"].remove(new_reaction["reactedUsersId"][0])
             emoji["count"] -= 1
-                
+
             if emoji.get("count") != 0:
                 updated = await DB.update(
                     MESSAGE_COLLECTION,
@@ -1647,7 +1659,7 @@ async def remove_reactions(
                 if updated and updated.get("status_code") is not None:
                     raise HTTPException(
                         status_code=status.HTTP_424_FAILED_DEPENDENCY,
-                        detail="Failed to remove member's reaction",
+                        detail="Failed to remove reaction",
                     )
                 # publish to centrifugo in the background
                 background_tasks.add_task(
@@ -1655,7 +1667,7 @@ async def remove_reactions(
                 )
                 return JSONResponse(
                     content=ResponseModel.success(
-                        data=emoji, message="member's reaction removed successfully"
+                        data=emoji, message="Reaction removed successfully"
                     ),
                     status_code=status.HTTP_200_OK,
                 )
@@ -1675,7 +1687,7 @@ async def remove_reactions(
             )
             return JSONResponse(
                 content=ResponseModel.success(
-                    data=None, message="reaction removed successfully"
+                    data=None, message="Reaction removed successfully"
                 ),
                 status_code=status.HTTP_200_OK,
             )
@@ -1685,4 +1697,3 @@ async def remove_reactions(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail="No member reacted with this emoji",
     )
-

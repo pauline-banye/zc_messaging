@@ -44,12 +44,9 @@ class Emoji(BaseModel):
     """
 
     name: str
-    # count: Optional[int]# = None
-    # count: int
     count: int = 1
     emoji: str
     reactedUsersId: List[str] = []
-    # reactedUsersId: List[ObjId] = []
 
 
 class MessageRequest(BaseModel):
